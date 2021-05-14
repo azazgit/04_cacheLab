@@ -33,19 +33,22 @@ int main(int argc, char *argv[]){
 	int opt;
 	int sets;
 	int lines;
-	int blocks;
+	int blockSize;
 	FILE * pFile; //pointer to FILE object
 	
-	while ((opt = getopt(argc, argv, "s:E:b:t:")) != -1) {
+	while ((opt = getopt(argc, argv, "s:E:b:t:h")) != -1) {
 		switch (opt) {
 			case 's':
 				sets = powfunc(2, atoi(optarg));
+				printf("s: %d, sets: %d\n", atoi(optarg), sets);
 				break;
 			case 'E':
 				lines = atoi(optarg); //pow(2, atoi(optarg));
+				printf("E: %d\n", atoi(optarg));
 				break;
 			case 'b':
-				blocks = powfunc(2, atoi(optarg));
+				blockSize = powfunc(2, atoi(optarg));
+				printf("b: %d, blockSize: %d\n", atoi(optarg), blockSize);
 				break;
 			case 't':
 				pFile = fopen(optarg, "r");
@@ -53,6 +56,10 @@ int main(int argc, char *argv[]){
 					printf("Unable to open %s\n", optarg);
 					print_usage();
 				}		
+				break;
+			case 'h':
+				printf("help option chosen \n");
+				printf("Usage: ./csim -s <s> -E <E> -b <b> -t <tracefile>\n");
 				break;
 			default: /* '?' */
 				print_usage();
