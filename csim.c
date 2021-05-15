@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define EXIT_FAILURE 1
 void print_usage(){
@@ -76,12 +77,23 @@ int main(int argc, char *argv[]){
 
 	// Reading lines like " M 20,1" or "L 19,3"
 	char identifier;
-	char address[25]; // Store the addresses as string.
+	unsigned long address;
 	int size;
+	char buffer[50]; // Used in fgets() to store a new line from file.
+	while(fgets(buffer, 50, pFile) > 0) {
+		buffer[strlen(buffer)-1] = '\0'; //remove trailing '\n' in the line in file.
+	
+		if (buffer[0] == ' '){ // Line has M, L or S.
+			sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
+		}
+		else { // Line has I.
+			sscanf(buffer, "%c %lx,%d\n", &identifier, &address, &size); 
+		}
 
-	while(fscanf(pFile, " %c %s, %d", &identifier, address, &size) > 0) {
-		printf("identifier: %c\n", identifier);		
-		printf("address: %s\n", address);		
+		printf("buffer: %s\n", buffer);
+		printf("identifier: %c\n", identifier);
+		printf("address in long decimal: %ld\n", address);		
+		printf("address in hex: %lx\n", address);		
 		printf("size: %d\n", size);		
 	}
 
