@@ -3,11 +3,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-// #include <math.h>
+#include <stdbool.h>
 
+#define EXIT_FAILURE 1
 void print_usage(){
 	printf("Usage: ./csim -s <s> -E <E> -b <b> -t <tracefile>\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 /* Power function to calculate no of sets and block_size */
@@ -22,9 +23,10 @@ static int powfunc(int base, int exp) {
 
 /* Create the line struct */
 typedef struct{
-	unsigned tag;
-	int valid;
-	int lru;
+	unsigned tag; 	// Store tag bits
+	bool valid;	// Store valid bit
+		
+	int lru;	// Store Least Recently Used status
 }line;
 
 
@@ -74,12 +76,12 @@ int main(int argc, char *argv[]){
 
 	// Reading lines like " M 20,1" or "L 19,3"
 	char identifier;
-	unsigned address;
+	char address[25]; // Store the addresses as string.
 	int size;
 
-	while(fscanf(pFile, " %c %x, %d", &identifier, &address, &size) > 0) {
+	while(fscanf(pFile, " %c %s, %d", &identifier, address, &size) > 0) {
 		printf("identifier: %c\n", identifier);		
-		printf("address: %x\n", address);		
+		printf("address: %s\n", address);		
 		printf("size: %d\n", size);		
 	}
 
