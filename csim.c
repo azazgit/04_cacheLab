@@ -24,7 +24,7 @@ static int powfunc(int base, int exp) {
 
 /* Create the line struct */
 typedef struct{
-	unsigned tag; 	// Store tag bits
+	unsigned long tag; 	// Store tag bits
 	bool valid;	// Store valid bit
 		
 	int lru;	// Store Least Recently Used status
@@ -33,10 +33,10 @@ typedef struct{
 
 
 int main(int argc, char *argv[]){
-	int opt;
-	int sets;
-	int lines;
-	int blockSize;
+	int opt; // Store return value from getopt().
+	unsigned long sets; // sets = 2^s, where is take from command line args.
+	int lines; // Store E from command line args.
+	int blockSize; // blocksSize = 2^b, where is taken from command line args. 
 	FILE * pFile; //pointer to FILE object
 	
 	while ((opt = getopt(argc, argv, "s:E:b:t:h")) != -1) {
@@ -46,7 +46,7 @@ int main(int argc, char *argv[]){
 				printf("s: %d, sets: %d\n", atoi(optarg), sets);
 				break;
 			case 'E':
-				lines = atoi(optarg); //pow(2, atoi(optarg));
+				lines = atoi(optarg);
 				printf("E: %d\n", atoi(optarg));
 				break;
 			case 'b':
@@ -69,17 +69,11 @@ int main(int argc, char *argv[]){
 		}
        }
 
-	/* Dynamically allocate memory for the cache based on the no. and sets and lines. */
-	line * cache = malloc(sizeof(line) * sets * lines);
-
-	 
-
-
-	// Reading lines like " M 20,1" or "L 19,3"
+	// Read lines like " M 20,1" from tracefile, which is  pointed to by pFile.
 	char identifier;
 	unsigned long address;
 	int size;
-	char buffer[50]; // Used in fgets() to store a new line from file.
+	char buffer[50]; // Used in fgets() to store a new line from tracefile.
 	while(fgets(buffer, 50, pFile) > 0) {
 		buffer[strlen(buffer)-1] = '\0'; //remove trailing '\n' in the line in file.
 	
@@ -99,8 +93,12 @@ int main(int argc, char *argv[]){
 
 	fclose(pFile);
 
-    
-	
+	/* Dynamically allocate memory for the cache based on the no. and sets and lines. */
+	line * cache = malloc(sizeof(line) * sets * lines);
+
+	 
+
+
 	
 
 	
