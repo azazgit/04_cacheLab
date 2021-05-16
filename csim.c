@@ -23,10 +23,11 @@ static int powfunc(int base, int exp) {
 }
 
 /* Create the line struct */
-typedef struct{
+typedef struct line{
 	unsigned long tag; 	   // Store tag bits.
 	bool valid;		   // Store valid bit
 	unsigned long pageNumber;  // Store the starting address of the block in cache.
+	//QNode * queueLocation	   // Point to the Node in queue where this pageNumber located.
 }line;
 
 /* LRU implementation */
@@ -43,40 +44,29 @@ typedef struct Queue {
 	unsigned numberOfFrames;
 	QNode * head; //front
 	QNode * tail; //rear
-} Queue;
-
-/* A hash (Collection of pointers to Queue Nodes). */
-typedef struct Hash {
-	int capacity;
-	QNode ** array;
-}
+}Queue;
 
 /* A utility function to create a new Queue Node. The queue Node will store
  * the given 'pageNumber' */
 QNode * newQNode(unsigned long pageNumber) {
 	QNode * temp = (QNode *) malloc(sizeof(QNode));
 	temp->pageNumber = pageNumber;
-	temp->prev = temp->next = NULL;
+	temp->toHeadOfQ = temp->toTailOfQ = NULL;
 	return temp;
 }
 
 /* A utility function to create an empty Queue.
  * The queue can have at most 'numberOfFrames' nodes. */
 Queue * createQueue(int numberOfFrames) {
-	Queue * queue = (Queue *) malloc(sizeof(Queue);
+	Queue * queue = (Queue *) malloc(sizeof(Queue));
 	queue->count = 0; //when do we use this? relevant to me?
 	queue->head = queue->tail = NULL;
 	queue->numberOfFrames = numberOfFrames; //when do we use this? relevant to me?
 	return queue;
 }
 	
-/* A utility function to check if there is slot available in memory. */
-int AreAllFramesFull(Queue * queue) {
-	return queue->count == queue->numberOfFrames;//when do we use this? relevant to me?
-}
 
 /* A utility function to check if queue is empty */
-
 int isQueueEmpty(Queue * queue) {
 	return queue->tail == NULL;
 }
@@ -90,32 +80,22 @@ void deQueue(Queue * queue) {
 	// If this is the only node in the list, then change front.
 	if (queue->head == queue->tail) {
 		queue->head = NULL;
-		// what about queue->tail = NULL? what is tail pointing to?
 	}
 
 	// Change tail and remove the previous tail.
 	QNode * temp = queue->tail; // Save ptr to current tail node, so you can free it later.
-	queue->tail = queue->tail->toHeadofQ; // Point tail to one node up the queue.
+	queue->tail = queue->tail->toHeadOfQ; // Point tail to one node up the queue.
 
 	if (queue->tail) {
-		queue->tail->toTailofQ = NULL; // Update pointer of the tail Node.
+		queue->tail->toTailOfQ = NULL; // Update pointer of the tail Node.
 	}
 
 	free(temp); // Free up the memory of the dequeued node.
-
-	queue->count--; // Decrement the number of full frames by 1.
-
 }
 
 /* A function to add a page with given 'pageNumber' to both queue and hash. */
-void Enqueue (Queue * queue, Hash * hash, unsigned pageNumber) {
+void Enqueue (Queue * queue, unsigned pageNumber) {
 	
-	// If all frames are full, remove the page at the rear.
-	if (AreAllFramesFull(queue)) {
-		hash->array[queue->rear->pageNumber] = NULL;
-		deQueue(queue);
-	}
-
 	// Create a new node with given pageNumber.
 	// And add the new node to the front of queue.
 	QNode * temp = newQNode(pageNumber);
@@ -127,23 +107,18 @@ void Enqueue (Queue * queue, Hash * hash, unsigned pageNumber) {
 	}
 
 	else { // Change the front.
-		queue->head->toHeadofQ = temp; // Node of top of Q moves temp ahead of itself.
+		queue->head->toHeadOfQ = temp; // Node of top of Q moves temp ahead of itself.
 		queue->head = temp; // Q points to temp as its head.
 	}
-
-	// Add page entry to hash also.
-	hash->array[pageNUmber] = temp;
-
-	// Increment number of full frames.
-	queue->count++;
 }
+
 
 /* This function is called when a page with given 'pageNumber' is referenced
  * from cache (or memory). There are two cases:
  * 1. Frame is not there in memory, we bring it in memory and add to the front
  * of queue.
  * 2. Frame is there is memory, we move the frame to front of queue.
- */
+ *
 void ReferencePage(Queue * queue, Hash * hash, unsigned pageNumber) {
 	QNode * reqPage = hash->array[pageNumber];
 
@@ -176,6 +151,15 @@ void ReferencePage(Queue * queue, Hash * hash, unsigned pageNumber) {
 		queue->front = reqPage;
 	}
 }
+*/
+
+/* Function to find the pageNumber from any given address.
+ * Given an address and b [no. of bits for blocksize], we can calculate the base address
+ * of any block by zeroing out the lowest b bits of the address.
+ */
+unsigned long pageNumberFinder(unsigned long address, int b){
+	return ((address >> b) << b);
+}
 
 
 
@@ -190,7 +174,7 @@ int main(int argc, char *argv[]){
 		switch (opt) {
 			case 's':
 				sets = powfunc(2, atoi(optarg));
-				printf("s: %d, sets: %d\n", atoi(optarg), sets);
+				printf("s: %d, sets: %ld\n", atoi(optarg), sets);
 				break;
 			case 'E':
 				lines = atoi(optarg);
@@ -242,13 +226,9 @@ int main(int argc, char *argv[]){
 
 	/* Dynamically allocate memory for the cache based on the no. and sets and lines. */
 	line * cache = malloc(sizeof(line) * sets * lines);
-
-	 
-
-
 	
-
-	
+	free(cache);
 	// printSummary(0, 0, 0);
-    return 0;
+	return 0;
+
 }
