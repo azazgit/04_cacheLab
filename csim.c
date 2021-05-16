@@ -24,16 +24,16 @@ static int powfunc(int base, int exp) {
 
 /* Create the line struct */
 typedef struct{
-	unsigned long tag; 	// Store tag bits.
-	bool valid;		// Store valid bit
-	unsigned long pageNum	// Store the starting address of the block in cache.
+	unsigned long tag; 	   // Store tag bits.
+	bool valid;		   // Store valid bit
+	unsigned long pageNumber;  // Store the starting address of the block in cache.
 }line;
 
 /* LRU implementation */
 
 typedef struct QNode {
-	struct QNode * prev;
-	struct QNode * next;
+	struct QNode * toHeadOfQ; // prev Point to the next node towards the head of the queue.
+	struct QNode * toTailOfQ; // next Point to the next node towards the tail of the queue.
 	unsigned long pageNumber;
 } QNode;
 
@@ -41,8 +41,8 @@ typedef struct QNode {
 typedef struct Queue {
 	unsigned count;
 	unsigned numberOfFrames;
-	QNode * front;
-	QNode * rear;
+	QNode * head; //front
+	QNode * tail; //rear
 } Queue;
 
 /* A hash (Collection of pointers to Queue Nodes). */
@@ -53,7 +53,7 @@ typedef struct Hash {
 
 /* A utility function to create a new Queue Node. The queue Node will store
  * the given 'pageNumber' */
-QNode * newQNode(unsigned pageNumber) {
+QNode * newQNode(unsigned long pageNumber) {
 	QNode * temp = (QNode *) malloc(sizeof(QNode));
 	temp->pageNumber = pageNumber;
 	temp->prev = temp->next = NULL;
@@ -64,21 +64,21 @@ QNode * newQNode(unsigned pageNumber) {
  * The queue can have at most 'numberOfFrames' nodes. */
 Queue * createQueue(int numberOfFrames) {
 	Queue * queue = (Queue *) malloc(sizeof(Queue);
-	queue->count = 0;
-	queue->front = queue->rear = NULL;
-	queue->numberOfFrames = numberOfFrames;
+	queue->count = 0; //when do we use this? relevant to me?
+	queue->head = queue->tail = NULL;
+	queue->numberOfFrames = numberOfFrames; //when do we use this? relevant to me?
 	return queue;
 }
 	
 /* A utility function to check if there is slot available in memory. */
 int AreAllFramesFull(Queue * queue) {
-	return queue->count == queue->numberOfFrames;
+	return queue->count == queue->numberOfFrames;//when do we use this? relevant to me?
 }
 
 /* A utility function to check if queue is empty */
 
 int isQueueEmpty(Queue * queue) {
-	return queue->rear == NULL;
+	return queue->tail == NULL;
 }
 
 /* A utility function to delete a frame from queue */
@@ -88,22 +88,23 @@ void deQueue(Queue * queue) {
 	}
 
 	// If this is the only node in the list, then change front.
-	if (queue->front == queue->rear) {
-		queue->front = NULL;
+	if (queue->head == queue->tail) {
+		queue->head = NULL;
+		// what about queue->tail = NULL? what is tail pointing to?
 	}
 
-	// Change rear and remove the previous rear.
-	QNode * temp = queue->rear;
-	queue->rear = queue->rear->prev;
+	// Change tail and remove the previous tail.
+	QNode * temp = queue->tail; // Save ptr to current tail node, so you can free it later.
+	queue->tail = queue->tail->toHeadofQ; // Point tail to one node up the queue.
 
-	if (queue->rear) {
-		queue->rear->next = NULL;
+	if (queue->tail) {
+		queue->tail->toTailofQ = NULL; // Update pointer of the tail Node.
 	}
 
-	free(temp);
+	free(temp); // Free up the memory of the dequeued node.
 
-	// Decrement the number of full frames by 1.
-	queue->count--;
+	queue->count--; // Decrement the number of full frames by 1.
+
 }
 
 /* A function to add a page with given 'pageNumber' to both queue and hash. */
@@ -115,19 +116,19 @@ void Enqueue (Queue * queue, Hash * hash, unsigned pageNumber) {
 		deQueue(queue);
 	}
 
-	// Create a new node with given page number.
+	// Create a new node with given pageNumber.
 	// And add the new node to the front of queue.
 	QNode * temp = newQNode(pageNumber);
-	temp->next = queue->front;
+	temp->toTailOfQ = queue->head; // Point new node to the head node of queue.
 
-	// If queue is empty, change both front and rear pointers.
+	// If queue is empty, point head and tail of queue to new node.
 	if (isQueueEmpty(queue)) {
-	       queue->rear = queue->front = temp;
+	       queue->head = queue->tail = temp;
 	}
 
 	else { // Change the front.
-		queue->front->prev = temp;
-		queue->front = temp;
+		queue->head->toHeadofQ = temp; // Node of top of Q moves temp ahead of itself.
+		queue->head = temp; // Q points to temp as its head.
 	}
 
 	// Add page entry to hash also.
