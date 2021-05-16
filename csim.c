@@ -167,6 +167,7 @@ int main(int argc, char *argv[]){
 	int opt; // Store return value from getopt().
 	unsigned long sets; // sets = 2^s, where is take from command line args.
 	int lines; // Store E from command line args.
+	int b;
 	int blockSize; // blocksSize = 2^b, where is taken from command line args. 
 	FILE * pFile; //pointer to FILE object
 	
@@ -181,8 +182,9 @@ int main(int argc, char *argv[]){
 				printf("E: %d\n", atoi(optarg));
 				break;
 			case 'b':
+				b = atoi(optarg);
 				blockSize = powfunc(2, atoi(optarg));
-				printf("b: %d, blockSize: %d\n", atoi(optarg), blockSize);
+				printf("b: %d, blockSize: %d\n", b, blockSize);
 				break;
 			case 't':
 				pFile = fopen(optarg, "r");
@@ -215,19 +217,25 @@ int main(int argc, char *argv[]){
 			sscanf(buffer, "%c %lx,%d\n", &identifier, &address, &size); 
 		}
 
-		printf("buffer: %s\n", buffer);
-		printf("identifier: %c\n", identifier);
-		printf("address in long decimal: %ld\n", address);		
-		printf("address in hex: %lx\n", address);		
-		printf("size: %d\n", size);		
+		//printf("buffer: %s\n", buffer);
+		//printf("identifier: %c\n", identifier);
+		//printf("address in long decimal: %ld\n", address);		
+		//printf("address in hex: %lx\n", address);		
+		//printf("size: %d\n", size);		
+		//unsigned long pageNumber = pageNumberFinder(address, b);
+		//printf("pageNumber: %ld\n\n", pageNumber);
+		
 	}
 
 	fclose(pFile);
+	unsigned long add = 31;
+	add = pageNumberFinder(add, b);
+	printf("pageNumber: %ld\n\n", add);
 
 	/* Dynamically allocate memory for the cache based on the no. and sets and lines. */
-	line * cache = malloc(sizeof(line) * sets * lines);
+	//line * cache = malloc(sizeof(line) * sets * lines);
 	
-	free(cache);
+	//free(cache);
 	// printSummary(0, 0, 0);
 	return 0;
 
