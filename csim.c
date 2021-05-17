@@ -164,7 +164,9 @@ unsigned long pageFinder(unsigned long address, int b){
 }
 
 /* Function returns the set index when given an address */
-unsigned long getSetIndex(unsigned long address, ){
+unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
+	return (address/sets)%blockSize;
+}
 
 
 /* Function to get all the command line args */
