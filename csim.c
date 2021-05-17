@@ -154,16 +154,17 @@ typedef struct line{
 	QNode * queueLocation;	   // Point to the Node in queue where this pageNumber located.
 }line;
 
-/* Function to find the pageNumber from any given address.
+/* Function to find the page from any given address.
  * Given an address and b [no. of bits for blocksize], we can calculate the base address
  * of any block by zeroing out the lowest b bits of the address.
+ * BlockSize determines how many bytes each of line cache contains. Since the project requirement does not care for individual bytes, we only store the address of byte 0 of the block. If any byte in that block were to exist in cache then so would byte 0, since either the whole block exists in cache or none of its bytes. In this way, we only have to store address of one byte.
  */
-unsigned long blockAddressFinder(unsigned long address, int b){
+unsigned long pageFinder(unsigned long address, int b){
 	return ((address >> b) << b);
 }
 
 /* Function returns the set index when given an address */
-//unsigned long getSetIndex(unsigned long address){
+unsigned long getSetIndex(unsigned long address, ){
 
 
 /* Function to get all the command line args */
@@ -208,6 +209,29 @@ int main(int argc, char *argv[]){
 	}
 	/* End of Parse command line args. */
 	
+	/* Set up cache data structure. */
+	unsigned long sets = powfunc(2, s);
+	printf("sets: %ld\n", sets);
+	int blockSize = powfunc(2, b);
+	printf("blockSize: %d\n", blockSize);
+
+	line ** cache = malloc(sizeof(line*) * sets);// Cache holds ptr to array of sets. 
+	int i;
+	for (i = 0; i < sets; i++){
+		cache[i] = malloc(sizeof(line) * lines);// Each set holds ptr to array of lines.
+	}
+
+	int j;
+	for (i = 0; i < sets; i++) {// Initialise each line with 0 and null ptr.
+		for (j = 0; j < lines; j++) {
+			(cache[i][j]).tag = 0;
+			cache[i][j].valid = 0;
+			cache[i][j].pageNumber = 0;
+			cache[i][j].queueLocation = NULL;
+		}
+	}	
+	/* End of Set up cache data structure. */
+	
 	/* Parse trace file */ 
 	char identifier;
 	unsigned long address;
@@ -231,28 +255,6 @@ int main(int argc, char *argv[]){
 	fclose(pFile);
 	/* End of Parse trace file. */
 
-	/* Set up cache data structure. */
-	unsigned long sets = powfunc(2, s);
-	printf("sets: %ld\n", sets);
-	int blockSize = powfunc(2, b);
-	printf("blockSize: %d\n", blockSize);
-
-	line ** cache = malloc(sizeof(line*) * sets);// Cache holds ptr to array of sets. 
-	int i;
-	for (i = 0; i < sets; i++){
-		cache[i] = malloc(sizeof(line) * lines);// Each set holds ptr to array of lines.
-	}
-
-	int j;
-	for (i = 0; i < sets; i++) {// Initialise each line with 0 and null ptr.
-		for (j = 0; j < lines; j++) {
-			(cache[i][j]).tag = 0;
-			cache[i][j].valid = 0;
-			cache[i][j].pageNumber = 0;
-			cache[i][j].queueLocation = NULL;
-		}
-	}	
-	/* End of Set up cache data structure. */
 
 
 	
@@ -262,13 +264,10 @@ int main(int argc, char *argv[]){
 	// printSummary(0, 0, 0);
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
-	for (i = 0; i < sets; i++) {
-		free(cache[i]);
-	}
+	for (i = 0; i < sets; i++) {free(cache[i]);}
 	free(cache);
 	cache = NULL;
 	/* End of free all dynamically allocated memory. */
-
 	return 0;
 
 }
