@@ -168,8 +168,13 @@ unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSi
 	return (address/sets)%blockSize;
 }
 
+/* Function returns the tag when given an address, s and b bits. */
+unsigned long getTag(unsigned long address, int s, int b) {
+	return address >> (s + b);
+}
 
-/* Function to get all the command line args */
+
+
 
 int main(int argc, char *argv[]){
 	
