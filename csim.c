@@ -236,11 +236,24 @@ int main(int argc, char *argv[]){
 	int blockSize = powfunc(2, b);
 	printf("blockSize: %d\n", blockSize);
 
-	// Dynamically allocate memory for the cache based on the no. and sets and lines
-	//line ** cache = malloc(sizeof(line) * sets * lines);
-	
-	//free(cache);
+	line ** cache = malloc(sizeof(line*) * sets);// Cache holds ptr to array of sets. 
+	int i;
+	for (i = 0; i < sets; i++){
+		cache[i] = malloc(sizeof(line) * lines)// Each set holds ptr to array of lines.
+	}	
+	/* End of Set up cache data structure. */
+
+
 	// printSummary(0, 0, 0);
+
+	/* Free all dynamically allocated memory for lines, sets and cache. */
+	for (i = 0;, i < sets; i++) {
+		free(cache[i]);
+	}
+	free(cache);
+	cache = NULL;
+	/* End of free all dynamically allocated memory. */
+
 	return 0;
 
 }
