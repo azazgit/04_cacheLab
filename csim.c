@@ -165,13 +165,14 @@ unsigned long pageFinder(unsigned long address, int b){
 
 /* Function returns the set index when given an address */
 unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
-	return (address/sets)%blockSize;
-}
+	return (address/sets)%blockSize; //https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf
+}// https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec16.pdf
 
 /* Function returns the tag when given an address, s and b bits. */
 unsigned long getTag(unsigned long address, int s, int b) {
 	return address >> (s + b);
 }
+
 
 
 
@@ -258,12 +259,13 @@ int main(int argc, char *argv[]){
 		printf("identifier: %c\n", identifier);
 		printf("address in hex: %lx\n", address);		
 		printf("size: %d\n\n", size);		
+	
 	}
 	fclose(pFile);
 	/* End of Parse trace file. */
 
 
-
+	
 	
 
 
