@@ -157,11 +157,13 @@ void ReferencePage(Queue * queue, Hash * hash, unsigned pageNumber) {
  * Given an address and b [no. of bits for blocksize], we can calculate the base address
  * of any block by zeroing out the lowest b bits of the address.
  */
-unsigned long pageNumberFinder(unsigned long address, int b){
+unsigned long blockAddressFinder(unsigned long address, int b){
 	return ((address >> b) << b);
 }
 
-
+/* Function returns the set index when given an address */
+unsigned long getSetIndex(unsigned long address){
+	
 
 int main(int argc, char *argv[]){
 	int opt; // Store return value from getopt().
@@ -228,9 +230,6 @@ int main(int argc, char *argv[]){
 	}
 
 	fclose(pFile);
-	unsigned long add = 31;
-	add = pageNumberFinder(add, b);
-	printf("pageNumber: %ld\n\n", add);
 
 	/* Dynamically allocate memory for the cache based on the no. and sets and lines. */
 	//line * cache = malloc(sizeof(line) * sets * lines);
