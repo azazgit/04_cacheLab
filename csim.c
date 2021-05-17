@@ -162,22 +162,25 @@ unsigned long blockAddressFinder(unsigned long address, int b){
 }
 
 /* Function returns the set index when given an address */
-unsigned long getSetIndex(unsigned long address){
-	
+//unsigned long getSetIndex(unsigned long address){
+
+
+/* Function to get all the command line args */
 
 int main(int argc, char *argv[]){
-	int opt; // Store return value from getopt().
-	unsigned long sets; // sets = 2^s, where is take from command line args.
-	int lines; // Store E from command line args.
-	int b;
-	int blockSize; // blocksSize = 2^b, where is taken from command line args. 
-	FILE * pFile; //pointer to FILE object
 	
+	
+	/* Parse command line args. */
+	int opt; 
+	int s;
+	int lines; // E 
+	int b;
+	FILE * pFile; 
 	while ((opt = getopt(argc, argv, "s:E:b:t:h")) != -1) {
 		switch (opt) {
 			case 's':
-				sets = powfunc(2, atoi(optarg));
-				printf("s: %d, sets: %ld\n", atoi(optarg), sets);
+				s = atoi(optarg);
+				printf("s: %d\n", atoi(optarg));
 				break;
 			case 'E':
 				lines = atoi(optarg);
@@ -185,8 +188,7 @@ int main(int argc, char *argv[]){
 				break;
 			case 'b':
 				b = atoi(optarg);
-				blockSize = powfunc(2, atoi(optarg));
-				printf("b: %d, blockSize: %d\n", b, blockSize);
+				printf("b: %d\n", atoi(optarg));
 				break;
 			case 't':
 				pFile = fopen(optarg, "r");
@@ -194,6 +196,7 @@ int main(int argc, char *argv[]){
 					printf("Unable to open %s\n", optarg);
 					print_usage();
 				}		
+				printf("file: %s\n", optarg);
 				break;
 			case 'h':
 				printf("help option chosen \n");
@@ -202,8 +205,15 @@ int main(int argc, char *argv[]){
 			default: /* '?' */
 				print_usage();
 		}
-       }
+	}
+	/* End of Parse command line args. */
 
+	/* Set up cache data structure. */
+	unsigned long sets = powfunc(2, s);
+	printf("sets: %ld\n", sets);
+	int blockSize = powfunc(2, b);
+	printf("blockSize: %d\n", blockSize);
+	
 	// Read lines like " M 20,1" from tracefile, which is  pointed to by pFile.
 	char identifier;
 	unsigned long address;
@@ -218,15 +228,6 @@ int main(int argc, char *argv[]){
 		else { // Line has I.
 			sscanf(buffer, "%c %lx,%d\n", &identifier, &address, &size); 
 		}
-
-		//printf("buffer: %s\n", buffer);
-		//printf("identifier: %c\n", identifier);
-		//printf("address in long decimal: %ld\n", address);		
-		//printf("address in hex: %lx\n", address);		
-		//printf("size: %d\n", size);		
-		//unsigned long pageNumber = pageNumberFinder(address, b);
-		//printf("pageNumber: %ld\n\n", pageNumber);
-		
 	}
 
 	fclose(pFile);
@@ -239,3 +240,16 @@ int main(int argc, char *argv[]){
 	return 0;
 
 }
+
+
+
+
+
+		//printf("buffer: %s\n", buffer);
+		//printf("identifier: %c\n", identifier);
+		//printf("address in long decimal: %ld\n", address);		
+		//printf("address in hex: %lx\n", address);		
+		//printf("size: %d\n", size);		
+		//unsigned long pageNumber = pageNumberFinder(address, b);
+		//printf("pageNumber: %ld\n\n", pageNumber);
+		
