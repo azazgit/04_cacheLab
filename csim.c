@@ -22,13 +22,6 @@ static int powfunc(int base, int exp) {
 	return result;
 }
 
-/* Create the line struct */
-typedef struct line{
-	unsigned long tag; 	   // Store tag bits.
-	bool valid;		   // Store valid bit
-	unsigned long pageNumber;  // Store the starting address of the block in cache.
-	//QNode * queueLocation	   // Point to the Node in queue where this pageNumber located.
-}line;
 
 /* LRU implementation */
 
@@ -153,6 +146,14 @@ void ReferencePage(Queue * queue, Hash * hash, unsigned pageNumber) {
 }
 */
 
+/* Create the line struct */
+typedef struct line{
+	unsigned long tag; 	   // Store tag bits.
+	bool valid;		   // Store valid bit
+	unsigned long pageNumber;  // Store the starting address of the block in cache.
+	QNode * queueLocation;	   // Point to the Node in queue where this pageNumber located.
+}line;
+
 /* Function to find the pageNumber from any given address.
  * Given an address and b [no. of bits for blocksize], we can calculate the base address
  * of any block by zeroing out the lowest b bits of the address.
@@ -239,15 +240,29 @@ int main(int argc, char *argv[]){
 	line ** cache = malloc(sizeof(line*) * sets);// Cache holds ptr to array of sets. 
 	int i;
 	for (i = 0; i < sets; i++){
-		cache[i] = malloc(sizeof(line) * lines)// Each set holds ptr to array of lines.
+		cache[i] = malloc(sizeof(line) * lines);// Each set holds ptr to array of lines.
+	}
+
+	int j;
+	for (i = 0; i < sets; i++) {// Initialise each line with 0 and null ptr.
+		for (j = 0; j < lines; j++) {
+			(cache[i][j]).tag = 0;
+			cache[i][j].valid = 0;
+			cache[i][j].pageNumber = 0;
+			cache[i][j].queueLocation = NULL;
+		}
 	}	
 	/* End of Set up cache data structure. */
+
+
+	
+
 
 
 	// printSummary(0, 0, 0);
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
-	for (i = 0;, i < sets; i++) {
+	for (i = 0; i < sets; i++) {
 		free(cache[i]);
 	}
 	free(cache);
