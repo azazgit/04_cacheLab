@@ -169,7 +169,6 @@ unsigned long blockAddressFinder(unsigned long address, int b){
 
 int main(int argc, char *argv[]){
 	
-	
 	/* Parse command line args. */
 	int opt; 
 	int s;
@@ -196,7 +195,7 @@ int main(int argc, char *argv[]){
 					printf("Unable to open %s\n", optarg);
 					print_usage();
 				}		
-				printf("file: %s\n", optarg);
+				printf("file: %s\n\n", optarg);
 				break;
 			case 'h':
 				printf("help option chosen \n");
@@ -207,33 +206,38 @@ int main(int argc, char *argv[]){
 		}
 	}
 	/* End of Parse command line args. */
+	
+	/* Parse trace file */ 
+	char identifier;
+	unsigned long address;
+	int size;
+	char buffer[50]; // fgets() uses buffer to store each new line from tracefile.
+	
+	while(fgets(buffer, 50, pFile) > 0) {
+		buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
+		printf("buffer: %s\n", buffer);
+		
+		if (buffer[0] == ' '){// Line has M, L or S.
+			sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
+		}
+		else {// Line has I.
+			sscanf(buffer, "%c %lx,%d\n", &identifier, &address, &size); 
+		}
+		printf("identifier: %c\n", identifier);
+		printf("address in hex: %lx\n", address);		
+		printf("size: %d\n\n", size);		
+	}
+	fclose(pFile);
+	/* End of Parse trace file. */
 
 	/* Set up cache data structure. */
 	unsigned long sets = powfunc(2, s);
 	printf("sets: %ld\n", sets);
 	int blockSize = powfunc(2, b);
 	printf("blockSize: %d\n", blockSize);
-	
-	// Read lines like " M 20,1" from tracefile, which is  pointed to by pFile.
-	char identifier;
-	unsigned long address;
-	int size;
-	char buffer[50]; // Used in fgets() to store a new line from tracefile.
-	while(fgets(buffer, 50, pFile) > 0) {
-		buffer[strlen(buffer)-1] = '\0'; //remove trailing '\n' in the line in file.
-	
-		if (buffer[0] == ' '){ // Line has M, L or S.
-			sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
-		}
-		else { // Line has I.
-			sscanf(buffer, "%c %lx,%d\n", &identifier, &address, &size); 
-		}
-	}
 
-	fclose(pFile);
-
-	/* Dynamically allocate memory for the cache based on the no. and sets and lines. */
-	//line * cache = malloc(sizeof(line) * sets * lines);
+	// Dynamically allocate memory for the cache based on the no. and sets and lines
+	//line ** cache = malloc(sizeof(line) * sets * lines);
 	
 	//free(cache);
 	// printSummary(0, 0, 0);
@@ -245,11 +249,6 @@ int main(int argc, char *argv[]){
 
 
 
-		//printf("buffer: %s\n", buffer);
-		//printf("identifier: %c\n", identifier);
-		//printf("address in long decimal: %ld\n", address);		
-		//printf("address in hex: %lx\n", address);		
-		//printf("size: %d\n", size);		
 		//unsigned long pageNumber = pageNumberFinder(address, b);
 		//printf("pageNumber: %ld\n\n", pageNumber);
 		
