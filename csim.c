@@ -24,151 +24,142 @@ static int powfunc(int base, int exp) {
 
 
 /* LRU implementation
- * Each set in the cache will have its own queue.
- * Each line in a set will have its own node in the queue.
+ * Cache will be implemented using sets.
+ ** Each set is represented by a queue.
+ ** The queues are implemented using doubly linked list of nodes.
+ ** Each node represents one line of the set.
  */ 
 
-typedef struct line { 
+typedef struct Line {
 	unsigned long tag; // Within in each set, the tag uniquely identifies the line.
-	struct line * ahead;// Point to the line ahead of this one  in the queue.
-	struct QNode * behind;// Point to line behind this one in the queue.
+	struct Line * ahead;// Point to the line ahead of this one  in the queue.
+	struct Line * behind;// Point to line behind this one in the queue.
 	int valid;// vaild bit.
-}line;
+}Line;
 
-/* A Queue*/
-typedef struct Queue {
-	unsigned count;
-	unsigned linesInSet;
-	QNode * head; 
-	QNode * tail; 
-}Queue;
+typedef struct Set {
+	Line * head;// Points to the most recently used line. Head of queue. 
+	Line * tail;// Points to the least recently used line. Tail of queue.
+	unsigned occupied;// Number of lines in use.
+	unsigned capacity;// Taken from cmd line arg 'E'.
+}Set;
 
-/* Function creates a new queue node wherein tag is stored. */
-QNode * newQNode(unsigned long tag) {
-	QNode * temp = (QNode *) malloc(sizeof(QNode));
-	temp->tag = tag;
+ /* Use this function to create a new line[node] to add to the set[queue]. */
+Line * newLine(unsigned long tag) {
+	Line * temp = (Line *) malloc(sizeof(Line));
 	temp->ahead = temp->behind = NULL;
+	temp->tag = tag;
+	temp->valid = 1;
 	return temp;
 }
 
 /* Function creates an empty Queue.
  * It holds the no. of lines in each set so that it can determine when to 
  * to apply LRU replacement policy. */
-Queue * createQueue(int linesInSet) {
-	Queue * queue = (Queue *) malloc(sizeof(Queue));
-	queue->count = 0; // Number of lines in use.
-	queue->head = queue->tail = NULL;
-	queue->linesInSet = linesInSet;
-	return queue;
+set * newSet(int capacity) {
+	Set * newSet = (Set *) malloc(sizeof(Set));
+	newSet->head = newSet->tail = NULL;
+	newSet->occupied = 0; 
+	newSet->capacity = capacity;
+	return newSet;
 }
 	
-
-/* Function checks if queue is empty. */
-int isQueueEmpty(Queue * queue) {
-	return queue->tail == NULL;
+/* Function checks if set is empty. Returns 1 if empty, else 0.*/
+int isSetEmpty(Set * set) {
+	return set->tail == NULL;
 }
 
-/* Function deletes a node from queue. */
-void deQueue(Queue * queue) {
-	if (isQueueEmpty(queue)) {
+/* Function checks if set is full. Returns 1 if full, else 0*/
+int isSetFull(Set * set){
+	return set->capacity == set->occupied;
+}
+
+
+/* Function removes a line from set [dequeues node of queue].*/
+void removeLine(Set * set) {
+	if (isSetEmpty(set)) {
 		return;
 	}
 
-	// If this is the only node in the list, then change front.
-	if (queue->head == queue->tail) {
-		queue->head = NULL;
+	// If this is the only line in the set, then set becomes empty.
+	if (set->head == set->tail) {
+		set->head = NULL;
 	}
 
 	// Change tail and remove the previous tail.
-	QNode * temp = queue->tail; // Save ptr to current tail node, so you can free it later.
-	queue->tail = queue->tail->ahead; // Point tail to one node up the queue.
+	Line * temp = set->tail; // Ptr to the line which is to be removed.
+	set->tail = set->tail->ahead; // Reassign LRU line of set.
 
-	if (queue->tail) {
-		queue->tail->behind = NULL; // Update pointer of the tail Node.
+	if (set->tail) {
+		set->tail->behind = NULL; // Update set so its new tail points to NULL.
 	}
 
-	free(temp); // Free up the memory of the dequeued node.
+	free(temp); // Free up the memory of the removed line [dequeued node].
 }
 
-/* Function adds node with given 'tag' to both queue and . */
-void Enqueue (Queue * queue, unsigned pageNumber) {
+/* Function creates a new line and adds it to set [enqueues new node to queue].
+ * Use when there is a cache miss, i.e., when line is not already in the set.*/
+void addLine(Set * set, unsigned long tag) {
 	
-	// Create a new node with given pageNumber.
-	// And add the new node to the front of queue.
-	QNode * temp = newQNode(pageNumber);
-	temp->behind = queue->head; // Point new node to the head node of queue.
+	Line * temp = newLine(tag);// Create a new line [new node].
+	
+	// Add new line to set [node goes at the head of queue].
+	temp->behind = set->head;
 
-	// If queue is empty, point head and tail of queue to new node.
-	if (isQueueEmpty(queue)) {
-	       queue->head = queue->tail = temp;
+	// Both head and tail of an empty queue must point to the new node.
+	if (isSetEmpty(set)) {
+	       set->head = set->tail = temp;
 	}
 
-	else { // Change the front.
-		queue->head->ahead = temp; // Node of top of Q moves temp ahead of itself.
+	else {// Head of queue points to the new node.
+		queue->head->ahead = temp; // Node at top of Q moves temp ahead of itself.
 		queue->head = temp; // Q points to temp as its head.
 	}
 }
 
-
-/* Function moves the line referenced by queueLocation to the front of the queue. */
-void MoveToFrontOfQ(Queue * queue, QNode * node) {
+/* Function moves existing node to the head of the queue.
+ * Use when there is a cache hit, i.e., for when line is already in set.*/
+void MoveToHeadOfQ(Set * set, Line * line) {
 	
-	// When line is not at the front of queue.
-	if (node != queue->head) {
-		// Unlink the line from its current location in queue.
-		node->ahead->behind = node->behind;
-		if (node->behind) {// NULL when node is at tail of Q.
-			node->behind->ahead = node->ahead;
+	// When node[line] is not at the head of queue[set].
+	if (line != set->head) {
+		// Unlink node from its current location in queue.
+		line->ahead->behind = line->behind;
+
+		if (line->behind) {// NULL when node is at tail of Q.
+			line->behind->ahead = line->ahead;
 		}
 
 		// If at tail of Q, then change tail as this node with be moved to front.
-		if (node == queue->tail) {
-			queue->tail = node->ahead;
-			queue->tail->behind = NULL;
+		if (line == set->tail) {
+			set->tail = line->ahead;
+			set->tail->behind = NULL;
 		}
 
 		// Move node to head of Q.
-		node->behind = queue->head;
-		node->ahead = NULL;
+		line->behind = set->head;
+		line->ahead = NULL;
 
 		// Point prev head of Q to the new one.
-		node->behind->ahead = node;
+		line->behind->ahead = line;
 
 		// Update queue to point to the new head.
-		queue->head = node;
+		set->head = line;
 	}
 }
 
 
-/* Create the line struct */
-typedef struct line{
-	unsigned long tag; 	   // Store tag bits.
-	int valid;		   // Store valid bit
-	unsigned long pageNumber;  // Store the starting address of the block in cache.
-	QNode * queueLocation;	   // Point to the Node in queue where this pageNumber located.
-}line;
-
-/* Function to find the page from any given address.
- * Given an address and b [no. of bits for blocksize], we can calculate the base address
- * of any block by zeroing out the lowest b bits of the address.
- * BlockSize determines how many bytes each of line cache contains. Since the project requirement does not care for individual bytes, we only store the address of byte 0 of the block. If any byte in that block were to exist in cache then so would byte 0, since either the whole block exists in cache or none of its bytes. In this way, we only have to store address of one byte.
- */
-unsigned long pageFinder(unsigned long address, int b){
-	return ((address >> b) << b);
-}
-
 /* Function returns the set index when given an address */
+//https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf
+// https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec16.pdf
 unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
-	return (address/sets)%blockSize; //https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf
-}// https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec16.pdf
+	return (address/sets)%blockSize; 
+}
 
 /* Function returns the tag when given an address, s and b bits. */
 unsigned long getTag(unsigned long address, int s, int b) {
 	return address >> (s + b);
 }
-
-
-
 
 
 int main(int argc, char *argv[]){
