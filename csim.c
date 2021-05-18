@@ -47,7 +47,7 @@ QNode * newQNode(unsigned long tag) {
 	return temp;
 }
 
-/* Function to create an empty Queue.
+/* Function creates an empty Queue.
  * It holds the no. of lines in each set so that it can determine when to 
  * to apply LRU replacement policy. */
 Queue * createQueue(int linesInSet) {
@@ -59,12 +59,12 @@ Queue * createQueue(int linesInSet) {
 }
 	
 
-/* A utility function to check if queue is empty */
+/* Function checks if queue is empty. */
 int isQueueEmpty(Queue * queue) {
 	return queue->tail == NULL;
 }
 
-/* A utility function to delete a frame from queue */
+/* Function deletes a node from queue. */
 void deQueue(Queue * queue) {
 	if (isQueueEmpty(queue)) {
 		return;
@@ -86,7 +86,7 @@ void deQueue(Queue * queue) {
 	free(temp); // Free up the memory of the dequeued node.
 }
 
-/* A function to add a page with given 'pageNumber' to both queue and hash. */
+/* Function adds node with given 'tag' to both queue and . */
 void Enqueue (Queue * queue, unsigned pageNumber) {
 	
 	// Create a new node with given pageNumber.
