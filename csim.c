@@ -106,50 +106,40 @@ void Enqueue (Queue * queue, unsigned pageNumber) {
 }
 
 
-/* This function is called when a page with given 'pageNumber' is referenced
- * from cache (or memory). There are two cases:
- * 1. Frame is not there in memory, we bring it in memory and add to the front
- * of queue.
- * 2. Frame is there is memory, we move the frame to front of queue.
- *
-void ReferencePage(Queue * queue, Hash * hash, unsigned pageNumber) {
-	QNode * reqPage = hash->array[pageNumber];
-
-	// The page is not in cache, bring it.
-	if (reqPage == NULL) {
-		Enqueue(queue, hash, pageNumber);
-	}
-	else if (reqPage != queue->front) {
-		// Unlink requested page from its current location in queue.
-		reqPage->prev->next = reqPage->next;
-		if (reqPage->next) {
-			reqPage->next->prev = reqPage->prev;
+/* Function moves the line referenced by queueLocation to the front of the queue. */
+void MoveToFrontOfQ(Queue * queue, QNode * node) {
+	
+	// When line is not at the front of queue.
+	if (node != queue->head) {
+		// Unlink the line from its current location in queue.
+		node->toHeadOfQ->toTailOfQ = node->toTailOfQ;
+		if (node->toTailOfQ) {// NULL when node is at tail of Q.
+			node->toTailOfQ->toHeadOfQ = node->toHeadOfQ;
 		}
 
-		// If the requested page is rear, then change rear as this
-		// node with be moved to front.
-		if (reqPage == queue->rear) {
-			queue->rear = reqPage->prev;
-			queue->rear->next = NULL;
+		// If at tail of Q, then change tail as this node with be moved to front.
+		if (node == queue->tail) {
+			queue->tail = node->toHeadOfQ;
+			queue->tail->toTailOfQ = NULL;
 		}
 
-		// Put requested page before current front.
-		reqPage->next = queue->front;
-		reqPage->prev = NULL;
+		// Move node to head of Q.
+		node->toTailOfQ = queue->head;
+		node->toHeadOfQ = NULL;
 
-		// Change prev of current front.
-		reqPage->next->prev = reqPage;
+		// Point prev head of Q to the new one.
+		node->toTailOfQ->toHeadOfQ = node;
 
-		// Change front to the requested page.
-		queue->front = reqPage;
+		// Update queue to point to the new head.
+		queue->head = node;
 	}
 }
-*/
+
 
 /* Create the line struct */
 typedef struct line{
 	unsigned long tag; 	   // Store tag bits.
-	bool valid;		   // Store valid bit
+	int valid;		   // Store valid bit
 	unsigned long pageNumber;  // Store the starting address of the block in cache.
 	QNode * queueLocation;	   // Point to the Node in queue where this pageNumber located.
 }line;
@@ -245,7 +235,8 @@ int main(int argc, char *argv[]){
 	unsigned long address;
 	int size;
 	char buffer[50]; // fgets() uses buffer to store each new line from tracefile.
-	
+	int hit = 0;
+	int miss = 0;
 	while(fgets(buffer, 50, pFile) > 0) {
 		buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
 		printf("buffer: %s\n", buffer);
@@ -259,7 +250,34 @@ int main(int argc, char *argv[]){
 		printf("identifier: %c\n", identifier);
 		printf("address in hex: %lx\n", address);		
 		printf("size: %d\n\n", size);		
-	
+		
+		unsigned long setIndex = getSetIndex(address, sets, blockSize);
+		unsigned tag = getTag(address, s, b); 
+
+		// If Load instruction:
+		if (identifier == 'L') {
+			
+			int found = 0;
+			int i;
+			for (i = 0; i < lines; i++) {
+				if((cache[setIndex][i].valid == 1) && 
+						(cache[setIndex][i].tag == tag)){
+					hit++;
+					found = 1;
+					//move line to the head of q;
+				}
+			}
+
+			// Miss
+			if(!found){
+				miss++;
+				// Remove LRU line in set.
+				// Add this to the head of q
+				// Each set needs to have its own q. Damn!
+
+
+
+		} //end of if (identifier == 'L') {
 	}
 	fclose(pFile);
 	/* End of Parse trace file. */
@@ -269,7 +287,7 @@ int main(int argc, char *argv[]){
 	
 
 
-
+		}
 	// printSummary(0, 0, 0);
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
@@ -278,10 +296,7 @@ int main(int argc, char *argv[]){
 	cache = NULL;
 	/* End of free all dynamically allocated memory. */
 	return 0;
-
 }
-
-
 
 
 
