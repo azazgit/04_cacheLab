@@ -48,13 +48,14 @@ QNode * newQNode(unsigned long pageNumber) {
 	return temp;
 }
 
-/* A utility function to create an empty Queue.
- * The queue can have at most 'numberOfFrames' nodes. */
-Queue * createQueue(int numberOfFrames) {
+/* Function to create an empty Queue.
+ * It holds the no. of lines in each set so that it can determine when to 
+ * to apply LRU replacement policy. */
+Queue * createQueue(int linesInSet) {
 	Queue * queue = (Queue *) malloc(sizeof(Queue));
-	queue->count = 0; //when do we use this? relevant to me?
+	queue->count = 0; // Number of lines in use.
 	queue->head = queue->tail = NULL;
-	queue->numberOfFrames = numberOfFrames; //when do we use this? relevant to me?
+	queue->linesInSet = linesInSet;
 	return queue;
 }
 	
@@ -229,6 +230,11 @@ int main(int argc, char *argv[]){
 		}
 	}	
 	/* End of Set up cache data structure. */
+
+	/* Set up queue */
+	 
+	
+	/* End of set up queue. */	
 	
 	/* Parse trace file */ 
 	char identifier;
