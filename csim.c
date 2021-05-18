@@ -23,27 +23,31 @@ static int powfunc(int base, int exp) {
 }
 
 
-/* LRU implementation */
+/* LRU implementation
+ * Each set in the cache will have its own queue.
+ * Each line in a set will have its own node in the queue.
+ */ 
 
-typedef struct QNode { // Each line in the set will have a its own node in the queue.
-	struct QNode * toHeadOfQ; // prev Point to the next node towards the head of the queue.
-	struct QNode * toTailOfQ; // next Point to the next node towards the tail of the queue.
+typedef struct line { 
 	unsigned long tag; // Within in each set, the tag uniquely identifies the line.
-} QNode;
+	struct line * ahead;// Point to the line ahead of this one  in the queue.
+	struct QNode * behind;// Point to line behind this one in the queue.
+	int valid;// vaild bit.
+}line;
 
 /* A Queue*/
-typedef struct Queue {// Each set will have its own queue.
+typedef struct Queue {
 	unsigned count;
 	unsigned linesInSet;
-	QNode * head; //front
-	QNode * tail; //rear
+	QNode * head; 
+	QNode * tail; 
 }Queue;
 
 /* Function creates a new queue node wherein tag is stored. */
 QNode * newQNode(unsigned long tag) {
 	QNode * temp = (QNode *) malloc(sizeof(QNode));
 	temp->tag = tag;
-	temp->toHeadOfQ = temp->toTailOfQ = NULL;
+	temp->ahead = temp->behind = NULL;
 	return temp;
 }
 
@@ -77,10 +81,10 @@ void deQueue(Queue * queue) {
 
 	// Change tail and remove the previous tail.
 	QNode * temp = queue->tail; // Save ptr to current tail node, so you can free it later.
-	queue->tail = queue->tail->toHeadOfQ; // Point tail to one node up the queue.
+	queue->tail = queue->tail->ahead; // Point tail to one node up the queue.
 
 	if (queue->tail) {
-		queue->tail->toTailOfQ = NULL; // Update pointer of the tail Node.
+		queue->tail->behind = NULL; // Update pointer of the tail Node.
 	}
 
 	free(temp); // Free up the memory of the dequeued node.
@@ -92,7 +96,7 @@ void Enqueue (Queue * queue, unsigned pageNumber) {
 	// Create a new node with given pageNumber.
 	// And add the new node to the front of queue.
 	QNode * temp = newQNode(pageNumber);
-	temp->toTailOfQ = queue->head; // Point new node to the head node of queue.
+	temp->behind = queue->head; // Point new node to the head node of queue.
 
 	// If queue is empty, point head and tail of queue to new node.
 	if (isQueueEmpty(queue)) {
@@ -100,7 +104,7 @@ void Enqueue (Queue * queue, unsigned pageNumber) {
 	}
 
 	else { // Change the front.
-		queue->head->toHeadOfQ = temp; // Node of top of Q moves temp ahead of itself.
+		queue->head->ahead = temp; // Node of top of Q moves temp ahead of itself.
 		queue->head = temp; // Q points to temp as its head.
 	}
 }
@@ -112,23 +116,23 @@ void MoveToFrontOfQ(Queue * queue, QNode * node) {
 	// When line is not at the front of queue.
 	if (node != queue->head) {
 		// Unlink the line from its current location in queue.
-		node->toHeadOfQ->toTailOfQ = node->toTailOfQ;
-		if (node->toTailOfQ) {// NULL when node is at tail of Q.
-			node->toTailOfQ->toHeadOfQ = node->toHeadOfQ;
+		node->ahead->behind = node->behind;
+		if (node->behind) {// NULL when node is at tail of Q.
+			node->behind->ahead = node->ahead;
 		}
 
 		// If at tail of Q, then change tail as this node with be moved to front.
 		if (node == queue->tail) {
-			queue->tail = node->toHeadOfQ;
-			queue->tail->toTailOfQ = NULL;
+			queue->tail = node->ahead;
+			queue->tail->behind = NULL;
 		}
 
 		// Move node to head of Q.
-		node->toTailOfQ = queue->head;
-		node->toHeadOfQ = NULL;
+		node->behind = queue->head;
+		node->ahead = NULL;
 
 		// Point prev head of Q to the new one.
-		node->toTailOfQ->toHeadOfQ = node;
+		node->behind->ahead = node;
 
 		// Update queue to point to the new head.
 		queue->head = node;
