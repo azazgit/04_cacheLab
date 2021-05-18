@@ -25,25 +25,24 @@ static int powfunc(int base, int exp) {
 
 /* LRU implementation */
 
-typedef struct QNode {
+typedef struct QNode { // Each line in the set will have a its own node in the queue.
 	struct QNode * toHeadOfQ; // prev Point to the next node towards the head of the queue.
 	struct QNode * toTailOfQ; // next Point to the next node towards the tail of the queue.
-	unsigned long pageNumber;
+	unsigned long tag; // Within in each set, the tag uniquely identifies the line.
 } QNode;
 
 /* A Queue*/
-typedef struct Queue {
+typedef struct Queue {// Each set will have its own queue.
 	unsigned count;
-	unsigned numberOfFrames;
+	unsigned linesInSet;
 	QNode * head; //front
 	QNode * tail; //rear
 }Queue;
 
-/* A utility function to create a new Queue Node. The queue Node will store
- * the given 'pageNumber' */
-QNode * newQNode(unsigned long pageNumber) {
+/* Function creates a new queue node wherein tag is stored. */
+QNode * newQNode(unsigned long tag) {
 	QNode * temp = (QNode *) malloc(sizeof(QNode));
-	temp->pageNumber = pageNumber;
+	temp->tag = tag;
 	temp->toHeadOfQ = temp->toTailOfQ = NULL;
 	return temp;
 }
