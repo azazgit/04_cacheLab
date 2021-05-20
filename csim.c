@@ -86,7 +86,7 @@ void addLine(Set set, unsigned long tag) {
 
 /* Function moves existing node to the head of the queue.
  * Use when there is a cache hit, i.e., for when line is already in set.*/
-void MoveToHeadOfQ(Set set, Line * line) {
+void moveToHeadOfQ(Set set, Line * line) {
 	
 	// When node[line] is not at the head of queue[set].
 	if (line != set.head) {
@@ -165,6 +165,10 @@ Line * findLineInSet(Set set, unsigned long tag){
     return NULL;
 }
 
+void printSummary(int hit, int miss, int eviction){
+    printf("hits: %d, misses: %d, evictions: %d\n", hit, miss, eviction);
+}
+
 int main(int argc, char *argv[]){
 	
 	/* Parse command line args. */
@@ -229,6 +233,7 @@ int main(int argc, char *argv[]){
 	char buffer[50]; // fgets() uses buffer to store each new line from tracefile.
 	int hit = 0;
 	int miss = 0;
+    int evictions = 0;
 	while(fgets(buffer, 50, pFile) > 0) {
 		buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
 		printf("buffer: %s\n", buffer);
@@ -251,7 +256,7 @@ int main(int argc, char *argv[]){
 		printf("tag: %d\n", tag);		
 		
 		// If Load instruction:
-		if (identifier == 'L') {
+		if (identifier == 'L' || identifier == 'S') {
             
             // If set is empty, add the address to cache.
             if(isSetEmpty(cache[setIndex])){
@@ -271,21 +276,47 @@ int main(int argc, char *argv[]){
 
                 else{// Address is not in cache.
                     miss++;
+                    if(isSetFull(cache[setIndex])){
+                        removeLine(cache[setIndex]);
+                        evictions++;
+                    }
                     addLine(cache[setIndex], tag);
+                }
+            }
+	    }
+		//end of if (identifier == 'L') {
+        
+        // If store instruction:
+        if(identifier == 'M') {
             
+            // If set is empty, add the address to cache.
+            if(isSetEmpty(cache[setIndex])){
+                addLine(cache[setIndex], tag);
+                miss++; // load is a miss.
+                hit++; // store is a hit.
             }
 
-			// Miss
-			if(!found){
-				miss++;
-				// Remove LRU line in set.
-				// Add this to the head of q
-				// Each set needs to have its own q. Damn!
+            // Set is not empty.
+            else{
+                Line * lineFound = findLineInSet(cache[setIndex], tag);
 
+                if(lineFound) {// Addres is in cache.
+                    hit++; // load is a hit.
+                    hit++; // store is a hit.
+                    moveToHeadOfQ(cache[setIndex], lineFound);
+                }
 
-
-		} //end of if (identifier == 'L') {
-	}
+                else {// Address is not in cache.
+                    miss++; // load is a miss.
+                    hit++; // store is a hit.
+                    if(isSetFull(cache[setIndex])){
+                        removeLine(cache[setIndex]);
+                        evictions++;
+                    }
+                    addLine(cache[setIndex], tag);
+                }
+        }
+    }
 	fclose(pFile);
 	/* End of Parse trace file. */
 
@@ -300,6 +331,8 @@ int main(int argc, char *argv[]){
     free(cache);
 	cache = NULL;
 	/* End of free all dynamically allocated memory. */
-	
+
+    printSummary(hit, miss, evictions);
+
     return 0;
         }}
