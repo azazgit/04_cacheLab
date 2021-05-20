@@ -315,6 +315,7 @@ int main(int argc, char *argv[]){
                     }
                     addLine(cache[setIndex], tag);
                 }
+            }
         }
     }
 	fclose(pFile);
@@ -335,4 +336,4 @@ int main(int argc, char *argv[]){
     printSummary(hit, miss, evictions);
 
     return 0;
-        }}
+}
