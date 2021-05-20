@@ -139,7 +139,7 @@ void removeLine(Set set) {
 /* Function returns the set index when given an address */
 //https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf [/lec16.pdf]
 unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
-	return (address/sets)%blockSize; 
+	return (address/blockSize)%sets; 
 }
 
 /* Function returns the tag when given an address, s and b bits. */
@@ -203,7 +203,6 @@ int main(int argc, char *argv[]){
         cache[i].occupied = 0;
         cache[i].capacity = lines;
 	}
-
 	/* End of Set up cache data structure. */
 
 	/* Parse trace file */ 
@@ -225,11 +224,15 @@ int main(int argc, char *argv[]){
 		}
 		printf("identifier: %c\n", identifier);
 		printf("address in hex: %lx\n", address);		
+		printf("address: %ld\n", address);		
 		printf("size: %d\n\n", size);		
 		
 		unsigned long setIndex = getSetIndex(address, sets, blockSize);
+		printf("set index: %ld\n", setIndex);		
 		unsigned tag = getTag(address, s, b); 
-		/*
+		printf("tag: %d\n", tag);		
+		
+        /*
 		// If Load instruction:
 		if (identifier == 'L') {
 			
