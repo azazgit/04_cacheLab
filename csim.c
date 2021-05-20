@@ -80,6 +80,8 @@ void addLine(Set set, unsigned long tag) {
 		set.head->ahead = temp; // Node at top of Q moves temp ahead of itself.
 		set.head = temp; // Q points to temp as its head.
 	}
+
+    set.occupied++;
 }
 
 /* Function moves existing node to the head of the queue.
@@ -130,6 +132,8 @@ void removeLine(Set set) {
 	if (set.tail) {
 		set.tail->behind = NULL; // Update set so its new tail points to NULL.
 	}
+
+    set.occupied--;
 
 	free(temp); // Free up the memory of the removed line [dequeued node].
 }
@@ -227,25 +231,29 @@ int main(int argc, char *argv[]){
 		printf("address: %ld\n", address);		
 		printf("size: %d\n\n", size);		
 		
+        // Get set index and tag for the given address.
 		unsigned long setIndex = getSetIndex(address, sets, blockSize);
 		printf("set index: %ld\n", setIndex);		
 		unsigned tag = getTag(address, s, b); 
 		printf("tag: %d\n", tag);		
 		
-        /*
 		// If Load instruction:
 		if (identifier == 'L') {
-			
+            
+            // If set is empty, add the address to cache [enqueue].
+            If(isSetEmpty(cache[setIndex])){
+                addLine(cache[setIndex], tag);
+                miss++;
+            }
+
+            // Set is not empty. Check if address is already in cache.
 			int found = 0;
 			int i;
 			for (i = 0; i < lines; i++) {
-				if((cache[setIndex][i].valid == 1) && 
-						(cache[setIndex][i].tag == tag)){
-					hit++;
-					found = 1;
-					//move line to the head of q;
-				}
-			}
+                cache[setIndex].
+                    
+            
+            }
 
 			// Miss
 			if(!found){
@@ -257,16 +265,10 @@ int main(int argc, char *argv[]){
 
 
 		} //end of if (identifier == 'L') {
-	}*/
+	}
 	fclose(pFile);
 	/* End of Parse trace file. */
 
-
-	
-	
-
-
-		}
 	// printSummary(0, 0, 0);
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
