@@ -24,10 +24,10 @@ static int powfunc(int base, int exp) {
 
 
 /* LRU implementation
- * Cache will be implemented using sets.
- ** Each set is represented by a queue.
- ** The queues are implemented using doubly linked list of nodes.
- ** Each node represents one line of the set.
+ * Cache is implemented as an array of sets [see struct Set below].
+ * Each set is represented by a queue.
+ * The queues are implemented using doubly linked list of nodes.
+ * Each node represents one line of the set.
  */ 
 
 typedef struct Line {
