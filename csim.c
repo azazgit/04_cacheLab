@@ -151,6 +151,19 @@ unsigned long getTag(unsigned long address, int s, int b) {
 	return address >> (s + b);
 }
 
+/* Function checks if a line is in set. Use to see  if address exists in cache.
+ * Returns pointer to the line in set.*/
+Line * findLineInSet(Set set, unsigned long tag, Line * line){
+    Line * temp = set.head; // Point to the most recently used line in set.
+    
+    while(temp){// While there is a line to check...
+        if(temp->valid && temp->tag == tag){// check if line exists
+            return temp;
+        }
+        temp = temp->behind;// else check the next line in the set.
+    }
+    return NULL;
+}
 
 int main(int argc, char *argv[]){
 	
@@ -241,7 +254,7 @@ int main(int argc, char *argv[]){
 		if (identifier == 'L') {
             
             // If set is empty, add the address to cache [enqueue].
-            If(isSetEmpty(cache[setIndex])){
+            if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
                 miss++;
             }
@@ -250,7 +263,7 @@ int main(int argc, char *argv[]){
 			int found = 0;
 			int i;
 			for (i = 0; i < lines; i++) {
-                cache[setIndex].
+               // cache[setIndex].
                     
             
             }
@@ -282,4 +295,4 @@ int main(int argc, char *argv[]){
 	/* End of free all dynamically allocated memory. */
 	
     return 0;
-}
+        }}
