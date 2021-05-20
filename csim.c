@@ -56,7 +56,7 @@ Line * newLine(unsigned long tag) {
 /* Function creates an empty Queue.
  * It holds the no. of lines in each set so that it can determine when to 
  * to apply LRU replacement policy. */
-set * newSet(int capacity) {
+Set * createSet(int capacity) {
 	Set * newSet = (Set *) malloc(sizeof(Set));
 	newSet->head = newSet->tail = NULL;
 	newSet->occupied = 0; 
@@ -112,8 +112,8 @@ void addLine(Set * set, unsigned long tag) {
 	}
 
 	else {// Head of queue points to the new node.
-		queue->head->ahead = temp; // Node at top of Q moves temp ahead of itself.
-		queue->head = temp; // Q points to temp as its head.
+		set->head->ahead = temp; // Node at top of Q moves temp ahead of itself.
+		set->head = temp; // Q points to temp as its head.
 	}
 }
 
@@ -150,8 +150,7 @@ void MoveToHeadOfQ(Set * set, Line * line) {
 
 
 /* Function returns the set index when given an address */
-//https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf
-// https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec16.pdf
+//https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf [/lec16.pdf]
 unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
 	return (address/sets)%blockSize; 
 }
@@ -207,13 +206,19 @@ int main(int argc, char *argv[]){
 	printf("sets: %ld\n", sets);
 	int blockSize = powfunc(2, b);
 	printf("blockSize: %d\n", blockSize);
-
-	line ** cache = malloc(sizeof(line*) * sets);// Cache holds ptr to array of sets. 
+	
+	// Cache holds ptr to array of set ptrs.
+	Set * cache = (Set *) malloc(sizeof(Set *) * sets);
+	
+	// Create the actual sets. cache[i] is a ptr to set i.
 	int i;
 	for (i = 0; i < sets; i++){
-		cache[i] = malloc(sizeof(line) * lines);// Each set holds ptr to array of lines.
+		cache[i] = (Set *) malloc(sizeof(Set));
+		cache[i] = createSet(lines);
 	}
 
+/*
+	
 	int j;
 	for (i = 0; i < sets; i++) {// Initialise each line with 0 and null ptr.
 		for (j = 0; j < lines; j++) {
@@ -222,7 +227,8 @@ int main(int argc, char *argv[]){
 			cache[i][j].pageNumber = 0;
 			cache[i][j].queueLocation = NULL;
 		}
-	}	
+	}
+*/	
 	/* End of Set up cache data structure. */
 
 	/* Set up queue */
@@ -253,7 +259,7 @@ int main(int argc, char *argv[]){
 		
 		unsigned long setIndex = getSetIndex(address, sets, blockSize);
 		unsigned tag = getTag(address, s, b); 
-
+		/*
 		// If Load instruction:
 		if (identifier == 'L') {
 			
@@ -278,7 +284,7 @@ int main(int argc, char *argv[]){
 
 
 		} //end of if (identifier == 'L') {
-	}
+	}*/
 	fclose(pFile);
 	/* End of Parse trace file. */
 
@@ -291,6 +297,7 @@ int main(int argc, char *argv[]){
 	// printSummary(0, 0, 0);
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
+	//int i;
 	for (i = 0; i < sets; i++) {free(cache[i]);}
 	free(cache);
 	cache = NULL;
