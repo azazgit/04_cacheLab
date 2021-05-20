@@ -211,12 +211,14 @@ int main(int argc, char *argv[]){
 	Set * cache = (Set *) malloc(sizeof(Set *) * sets);
 	
 	// Create the actual sets. cache[i] is a ptr to set i.
-	int i;
+	
+    /*
+    int i;
 	for (i = 0; i < sets; i++){
 		cache[i] = (Set *) malloc(sizeof(Set));
 		cache[i] = createSet(lines);
 	}
-
+*/
 /*
 	
 	int j;
@@ -298,9 +300,13 @@ int main(int argc, char *argv[]){
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
 	//int i;
-	for (i = 0; i < sets; i++) {free(cache[i]);}
+	
+    /*
+    for (i = 0; i < sets; i++) {free(cache[i]);}
 	free(cache);
 	cache = NULL;
+    */
+
 	/* End of free all dynamically allocated memory. */
 	return 0;
 }
