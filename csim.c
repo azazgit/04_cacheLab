@@ -153,7 +153,7 @@ unsigned long getTag(unsigned long address, int s, int b) {
 
 /* Function checks if a line is in set. Use to see  if address exists in cache.
  * Returns pointer to the line in set.*/
-Line * findLineInSet(Set set, unsigned long tag, Line * line){
+Line * findLineInSet(Set set, unsigned long tag){
     Line * temp = set.head; // Point to the most recently used line in set.
     
     while(temp){// While there is a line to check...
@@ -253,18 +253,25 @@ int main(int argc, char *argv[]){
 		// If Load instruction:
 		if (identifier == 'L') {
             
-            // If set is empty, add the address to cache [enqueue].
+            // If set is empty, add the address to cache.
             if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
                 miss++;
             }
 
-            // Set is not empty. Check if address is already in cache.
-			int found = 0;
-			int i;
-			for (i = 0; i < lines; i++) {
-               // cache[setIndex].
-                    
+            // Set is not empty.
+            else {// Check if address exists in cache.
+
+                Line * lineFound = findLineInSet(cache[setIndex], tag);
+                
+                if(lineFound) {// Address is in cache.   
+                    hit++;
+                    moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
+                }
+
+                else{// Address is not in cache.
+                    miss++;
+                    addLine(cache[setIndex], tag);
             
             }
 
