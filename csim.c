@@ -22,7 +22,6 @@ static int powfunc(int base, int exp) {
 	return result;
 }
 
-
 /* LRU implementation
  * Cache will be implemented using sets.
  ** Each set is represented by a queue.
@@ -44,7 +43,17 @@ typedef struct Set {
 	unsigned capacity;// Taken from cmd line arg 'E'.
 }Set;
 
- /* Use this function to create a new line[node] to add to the set[queue]. */
+/* Function checks if set is empty. Returns 1 if empty, else 0.*/
+int isSetEmpty(Set set) {
+	return set.tail == NULL;
+}
+
+/* Function checks if set is full. Returns 1 if full, else 0*/
+int isSetFull(Set set){
+	return set.capacity == set.occupied;
+}
+
+/* Use this function to create a new line[node] to add to the set[queue]. */
 Line * newLine(unsigned long tag) {
 	Line * temp = (Line *) malloc(sizeof(Line));
 	temp->ahead = temp->behind = NULL;
@@ -53,76 +62,32 @@ Line * newLine(unsigned long tag) {
 	return temp;
 }
 
-/* Function creates an empty Queue.
- * It holds the no. of lines in each set so that it can determine when to 
- * to apply LRU replacement policy. */
-Set * createSet(int capacity) {
-	Set * newSet = (Set *) malloc(sizeof(Set));
-	newSet->head = newSet->tail = NULL;
-	newSet->occupied = 0; 
-	newSet->capacity = capacity;
-	return newSet;
-}
-	
-/* Function checks if set is empty. Returns 1 if empty, else 0.*/
-int isSetEmpty(Set * set) {
-	return set->tail == NULL;
-}
-
-/* Function checks if set is full. Returns 1 if full, else 0*/
-int isSetFull(Set * set){
-	return set->capacity == set->occupied;
-}
-
-
-/* Function removes a line from set [dequeues node of queue].*/
-void removeLine(Set * set) {
-	if (isSetEmpty(set)) {
-		return;
-	}
-
-	// If this is the only line in the set, then set becomes empty.
-	if (set->head == set->tail) {
-		set->head = NULL;
-	}
-
-	// Change tail and remove the previous tail.
-	Line * temp = set->tail; // Ptr to the line which is to be removed.
-	set->tail = set->tail->ahead; // Reassign LRU line of set.
-
-	if (set->tail) {
-		set->tail->behind = NULL; // Update set so its new tail points to NULL.
-	}
-
-	free(temp); // Free up the memory of the removed line [dequeued node].
-}
-
-/* Function creates a new line and adds it to set [enqueues new node to queue].
+/* Function adds newly created line to the head of set [enqueues new node to queue].
  * Use when there is a cache miss, i.e., when line is not already in the set.*/
-void addLine(Set * set, unsigned long tag) {
+void addLine(Set set, unsigned long tag) {
 	
 	Line * temp = newLine(tag);// Create a new line [new node].
 	
 	// Add new line to set [node goes at the head of queue].
-	temp->behind = set->head;
+	temp->behind = set.head;
 
 	// Both head and tail of an empty queue must point to the new node.
 	if (isSetEmpty(set)) {
-	       set->head = set->tail = temp;
+	       set.head = set.tail = temp;
 	}
 
 	else {// Head of queue points to the new node.
-		set->head->ahead = temp; // Node at top of Q moves temp ahead of itself.
-		set->head = temp; // Q points to temp as its head.
+		set.head->ahead = temp; // Node at top of Q moves temp ahead of itself.
+		set.head = temp; // Q points to temp as its head.
 	}
 }
 
 /* Function moves existing node to the head of the queue.
  * Use when there is a cache hit, i.e., for when line is already in set.*/
-void MoveToHeadOfQ(Set * set, Line * line) {
+void MoveToHeadOfQ(Set set, Line * line) {
 	
 	// When node[line] is not at the head of queue[set].
-	if (line != set->head) {
+	if (line != set.head) {
 		// Unlink node from its current location in queue.
 		line->ahead->behind = line->behind;
 
@@ -131,22 +96,44 @@ void MoveToHeadOfQ(Set * set, Line * line) {
 		}
 
 		// If at tail of Q, then change tail as this node with be moved to front.
-		if (line == set->tail) {
-			set->tail = line->ahead;
-			set->tail->behind = NULL;
+		if (line == set.tail) {
+			set.tail = line->ahead;
+			set.tail->behind = NULL;
 		}
 
 		// Move node to head of Q.
-		line->behind = set->head;
+		line->behind = set.head;
 		line->ahead = NULL;
 
 		// Point prev head of Q to the new one.
 		line->behind->ahead = line;
 
 		// Update queue to point to the new head.
-		set->head = line;
+		set.head = line;
 	}
 }
+/* Function removes a line from set [dequeues node of queue].*/
+void removeLine(Set set) {
+	if (isSetEmpty(set)) {
+		return;
+	}
+
+	// If this is the only line in the set, then set becomes empty.
+	if (set.head == set.tail) {
+		set.head = NULL;
+	}
+
+	// Change tail and remove the previous tail.
+	Line * temp = set.tail; // Ptr to the line which is to be removed.
+	set.tail = set.tail->ahead; // Reassign LRU line of set.
+
+	if (set.tail) {
+		set.tail->behind = NULL; // Update set so its new tail points to NULL.
+	}
+
+	free(temp); // Free up the memory of the removed line [dequeued node].
+}
+
 
 
 /* Function returns the set index when given an address */
@@ -207,35 +194,18 @@ int main(int argc, char *argv[]){
 	int blockSize = powfunc(2, b);
 	printf("blockSize: %d\n", blockSize);
 	
-	// Cache holds ptr to array of set ptrs.
-	Set * cache = (Set *) malloc(sizeof(Set *) * sets);
+	// Cache holds ptr to array of sets.
+	Set * cache = (Set *) malloc(sizeof(Set) * sets);
 	
-	// Create the actual sets. cache[i] is a ptr to set i.
+	// Create sets and initialise. cache[i] is a ptr to set i.
 	int i;
 	for (i = 0; i < sets; i++){
-		cache[i] = (Set *) malloc(sizeof(Set));
-		cache[i] = createSet(lines);
+        cache[i].occupied = 0;
+        cache[i].capacity = lines;
 	}
 
-/*
-	
-	int j;
-	for (i = 0; i < sets; i++) {// Initialise each line with 0 and null ptr.
-		for (j = 0; j < lines; j++) {
-			(cache[i][j]).tag = 0;
-			cache[i][j].valid = 0;
-			cache[i][j].pageNumber = 0;
-			cache[i][j].queueLocation = NULL;
-		}
-	}
-*/	
 	/* End of Set up cache data structure. */
 
-	/* Set up queue */
-	 
-	
-	/* End of set up queue. */	
-	
 	/* Parse trace file */ 
 	char identifier;
 	unsigned long address;
@@ -297,16 +267,14 @@ int main(int argc, char *argv[]){
 	// printSummary(0, 0, 0);
 
 	/* Free all dynamically allocated memory for lines, sets and cache. */
-	//int i;
-	for (i = 0; i < sets; i++) {free(cache[i]);}
-	free(cache);
+    for (i = 0; i < sets; i++) {
+	    while(!isSetEmpty(cache[i])){
+           removeLine(cache[i]); // Dequeue each node in queue.
+        }
+    } 
+    free(cache);
 	cache = NULL;
 	/* End of free all dynamically allocated memory. */
-	return 0;
+	
+    return 0;
 }
-
-
-
-		//unsigned long pageNumber = pageNumberFinder(address, b);
-		//printf("pageNumber: %ld\n\n", pageNumber);
-		
