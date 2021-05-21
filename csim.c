@@ -271,16 +271,9 @@ int main(int argc, char *argv[]){
 
         else {continue;} // Ignore I instructions and go to next line in file.
 		
-        printf("identifier: %c\n", identifier);
-		printf("address in hex: %lx\n", address);		
-		printf("address: %ld\n", address);		
-		//printf("size: %d\n", size);		
-		
         // Get set index and tag for the given address.
 		unsigned long setIndex = getSetIndex(address, sets, blockSize);
-		printf("set index: %ld\n", setIndex);		
 		unsigned tag = getTag(address, s, b); 
-		printf("tag: %d\n\n", tag);		
 		
 		// If Load instruction:
 		if (identifier == 'L' || identifier == 'S') {
