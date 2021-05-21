@@ -44,13 +44,13 @@ typedef struct Set {
 }Set;
 
 /* Function checks if set is empty. Returns 1 if empty, else 0.*/
-int isSetEmpty(Set set) {
-	return set.tail == NULL;
+int isSetEmpty(Set * set) {
+	return set->tail == NULL;
 }
 
 /* Function checks if set is full. Returns 1 if full, else 0*/
-int isSetFull(Set set){
-	return set.capacity == set.occupied;
+int isSetFull(Set * set){
+	return set->capacity == set->occupied;
 }
 
 /* Use this function to create a new line[node] to add to the set[queue]. */
@@ -63,33 +63,34 @@ Line * newLine(unsigned long tag) {
 }
 
 /* Function adds newly created line to the head of set [enqueues new node to queue].
+ *
  * Use when there is a cache miss, i.e., when line is not already in the set.*/
-void addLine(Set set, unsigned long tag) {
+void addLine(Set * set, unsigned long tag) {
 	
 	Line * temp = newLine(tag);// Create a new line [new node].
 	
 	// Add new line to set [node goes at the head of queue].
-	temp->behind = set.head;
+	temp->behind = set->head;
 
 	// Both head and tail of an empty queue must point to the new node.
 	if (isSetEmpty(set)) {
-	       set.head = set.tail = temp;
+	       set->head = set->tail = temp;
 	}
 
 	else {// Head of queue points to the new node.
-		set.head->ahead = temp; // Node at top of Q moves temp ahead of itself.
-		set.head = temp; // Q points to temp as its head.
+		set->head->ahead = temp; // Node at top of Q moves temp ahead of itself.
+		set->head = temp; // Q points to temp as its head.
 	}
 
-    set.occupied++;
+    set->occupied++;
 }
 
 /* Function moves existing node to the head of the queue.
  * Use when there is a cache hit, i.e., for when line is already in set.*/
-void moveToHeadOfQ(Set set, Line * line) {
+void moveToHeadOfQ(Set * set, Line * line) {
 	
 	// When node[line] is not at the head of queue[set].
-	if (line != set.head) {
+	if (line != set->head) {
 		// Unlink node from its current location in queue.
 		line->ahead->behind = line->behind;
 
@@ -98,47 +99,46 @@ void moveToHeadOfQ(Set set, Line * line) {
 		}
 
 		// If at tail of Q, then change tail as this node with be moved to front.
-		if (line == set.tail) {
-			set.tail = line->ahead;
-			set.tail->behind = NULL;
+		if (line == set->tail) {
+			set->tail = line->ahead;
+			set->tail->behind = NULL;
 		}
 
 		// Move node to head of Q.
-		line->behind = set.head;
+		line->behind = set->head;
 		line->ahead = NULL;
 
 		// Point prev head of Q to the new one.
 		line->behind->ahead = line;
 
 		// Update queue to point to the new head.
-		set.head = line;
+		set->head = line;
 	}
 }
+
 /* Function removes a line from set [dequeues node of queue].*/
-void removeLine(Set set) {
+void removeLine(Set * set) {
 	if (isSetEmpty(set)) {
 		return;
 	}
 
 	// If this is the only line in the set, then set becomes empty.
-	if (set.head == set.tail) {
-		set.head = NULL;
+	if (set->head == set->tail) {
+		set->head = NULL;
 	}
 
 	// Change tail and remove the previous tail.
-	Line * temp = set.tail; // Ptr to the line which is to be removed.
-	set.tail = set.tail->ahead; // Reassign LRU line of set.
+	Line * temp = set->tail; // Ptr to the line which is to be removed.
+	set->tail = set->tail->ahead; // Reassign LRU line of set.
 
-	if (set.tail) {
-		set.tail->behind = NULL; // Update set so its new tail points to NULL.
+	if (set->tail) {
+		set->tail->behind = NULL; // Update set so its new tail points to NULL.
 	}
 
-    set.occupied--;
+    set->occupied--;
 
 	free(temp); // Free up the memory of the removed line [dequeued node].
 }
-
-
 
 /* Function returns the set index when given an address */
 //https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf [/lec16.pdf]
@@ -153,8 +153,8 @@ unsigned long getTag(unsigned long address, int s, int b) {
 
 /* Function checks if a line is in set. Use to see  if address exists in cache.
  * Returns pointer to the line in set.*/
-Line * findLineInSet(Set set, unsigned long tag){
-    Line * temp = set.head; // Point to the most recently used line in set.
+Line * findLineInSet(Set * set, unsigned long tag){
+    Line * temp = set->head; // Point to the most recently used line in set.
     
     while(temp){// While there is a line to check...
         if(temp->valid && temp->tag == tag){// check if line exists
@@ -176,8 +176,9 @@ int main(int argc, char *argv[]){
 	int s;
 	int lines; // E 
 	int b;
-	FILE * pFile; 
-	while ((opt = getopt(argc, argv, "s:E:b:t:h")) != -1) {
+    int verbose = 0;
+    FILE * pFile; 
+	while ((opt = getopt(argc, argv, "s:E:b:t:hv")) != -1) {
 		switch (opt) {
 			case 's':
 				s = atoi(optarg);
@@ -203,6 +204,10 @@ int main(int argc, char *argv[]){
 				printf("help option chosen \n");
 				printf("Usage: ./csim -s <s> -E <E> -b <b> -t <tracefile>\n");
 				break;
+            case 'v':
+                printf("verbose chosen. \n");
+                verbose = 1;
+                break;
 			default: /* '?' */
 				print_usage();
 		}
@@ -214,13 +219,18 @@ int main(int argc, char *argv[]){
 	printf("sets: %ld\n", sets);
 	int blockSize = powfunc(2, b);
 	printf("blockSize: %d\n", blockSize);
+    printf("================\n\n");	
+
+
+	// Cache holds ptr to array of set ptrs.
+	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
 	
-	// Cache holds ptr to array of sets.
-	Set * cache = (Set *) malloc(sizeof(Set) * sets);
-	
-	for (i = 0; i < sets; i++){
-        cache[i].occupied = 0;
-        cache[i].capacity = lines;
+    // Each set ptr points to a Set struct.
+    int i;
+    for(i = 0; i < sets; i++){
+        cache[i] = malloc(sizeof(Set));
+        cache[i]->occupied = 0;
+        cache[i]->capacity = lines;
 	}
 	/* End of Set up cache data structure. */
 
@@ -245,13 +255,13 @@ int main(int argc, char *argv[]){
 		printf("identifier: %c\n", identifier);
 		printf("address in hex: %lx\n", address);		
 		printf("address: %ld\n", address);		
-		printf("size: %d\n\n", size);		
+		//printf("size: %d\n", size);		
 		
         // Get set index and tag for the given address.
 		unsigned long setIndex = getSetIndex(address, sets, blockSize);
 		printf("set index: %ld\n", setIndex);		
 		unsigned tag = getTag(address, s, b); 
-		printf("tag: %d\n", tag);		
+		printf("tag: %d\n\n", tag);		
 		
 		// If Load instruction:
 		if (identifier == 'L' || identifier == 'S') {
@@ -260,6 +270,10 @@ int main(int argc, char *argv[]){
             if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
                 miss++;
+		        printf("Empty cache miss. \n");
+                printf("buffer: %s ", buffer);
+                printf("miss\n");
+                printf("==================\n\n");
             }
 
             // Set is not empty.
@@ -269,14 +283,26 @@ int main(int argc, char *argv[]){
                 
                 if(lineFound) {// Address is in cache.   
                     hit++;
+		            printf("buffer: %s ", buffer);
+                    printf("hit\n");
+                    printf("==================\n\n");
                     moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
                 }
 
                 else{// Address is not in cache.
                     miss++;
+                    printf("Address not in cache miss.\n");
+		            printf("buffer: %s ", buffer);
+                    printf("miss\n");
+                    printf("==================\n\n");
+
+                    printf("runs to here.");
+             //       moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
+             //       printf("after movetoHeadOfQ function\n.");
                     if(isSetFull(cache[setIndex])){
                         removeLine(cache[setIndex]);
                         evictions++;
+                        printf("address is not in cache. L eviction\n");
                     }
                     addLine(cache[setIndex], tag);
                 }
@@ -285,13 +311,21 @@ int main(int argc, char *argv[]){
 		//end of if (identifier == 'L') {
         
         // If store instruction:
-        if(identifier == 'M') {
+        else if(identifier == 'M') {
             
             // If set is empty, add the address to cache.
             if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
                 miss++; // load is a miss.
+		        printf("Empty cache miss. \n");
+                printf("buffer: %s ", buffer);
+                printf("miss\n");
+                printf("==================\n\n");
                 hit++; // store is a hit.
+		        printf("Hit after empty cache miss. \n");
+                printf("buffer: %s ", buffer);
+                printf("hit\n");
+                printf("==================\n\n");
             }
 
             // Set is not empty.
@@ -300,16 +334,29 @@ int main(int argc, char *argv[]){
 
                 if(lineFound) {// Addres is in cache.
                     hit++; // load is a hit.
+		            printf("buffer: %s ", buffer);
+                    printf("load hit\n");
+                    printf("==================\n\n");
                     hit++; // store is a hit.
+		            printf("buffer: %s ", buffer);
+                    printf("store hit\n");
+                    printf("==================\n\n");
                     moveToHeadOfQ(cache[setIndex], lineFound);
                 }
 
                 else {// Address is not in cache.
                     miss++; // load is a miss.
+		            printf("buffer: %s ", buffer);
+                    printf("load miss\n");
+                    printf("==================\n\n");
                     hit++; // store is a hit.
+		            printf("buffer: %s ", buffer);
+                    printf("store hits after load miss\n");
+                    printf("==================\n\n");
                     if(isSetFull(cache[setIndex])){
                         removeLine(cache[setIndex]);
                         evictions++;
+                        printf("eviction\n");
                     }
                     addLine(cache[setIndex], tag);
                 }
@@ -323,6 +370,8 @@ int main(int argc, char *argv[]){
 	    while(!isSetEmpty(cache[i])){
            removeLine(cache[i]); // Dequeue each node in queue.
         }
+        free(cache[i]);
+        cache[i] = NULL;
     } 
     free(cache);
 	cache = NULL;
