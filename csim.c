@@ -262,13 +262,12 @@ int main(int argc, char *argv[]){
 	int misses = 0;
     int evictions = 0;
 	while(fgets(buffer, 50, pFile) > 0) {
-		buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
-		printf("buffer: %s\n", buffer);
+		
+        buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
 		
 		if (buffer[0] == ' '){// Line has M, L or S.
 			sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
 		}
-
         else {continue;} // Ignore I instructions and go to next line in file.
 		
         // Get set index and tag for the given address.
@@ -282,10 +281,9 @@ int main(int argc, char *argv[]){
             if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
                 misses++;
-		        printf("Empty cache miss. \n");
-                printf("buffer: %s ", buffer);
-                printf("misses\n");
-                printf("==================\n\n");
+                if (verbose) {
+                    printf("buffer: %s miss\n", buffer);
+                }
             }
 
             // Set is not empty.
@@ -295,22 +293,17 @@ int main(int argc, char *argv[]){
                 
                 if(lineFound) {// Address is in cache.   
                     hits++;
-		            printf("buffer: %s ", buffer);
-                    printf("hits\n");
-                    printf("==================\n\n");
+		            if (verbose) {
+                        printf("buffer: %s hit\n ", buffer);
+                    }
                     moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
                 }
-
                 else{// Address is not in cache.
                     misses++;
-                    printf("Address not in cache miss.\n");
-		            printf("buffer: %s ", buffer);
-                    printf("miss\n");
-                    printf("==================\n\n");
+		            if (verbose) {
+                        printf("buffer: %s miss\n", buffer);
+                    }
 
-                    printf("runs to here.");
-             //       moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
-             //       printf("after movetoHeadOfQ function\n.");
                     if(isSetFull(cache[setIndex])){
                         removeLine(cache[setIndex]);
                         evictions++;
