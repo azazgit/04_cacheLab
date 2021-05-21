@@ -236,6 +236,8 @@ int main(int argc, char *argv[]){
     int i;
     for(i = 0; i < sets; i++){
         cache[i] = malloc(sizeof(Set));
+        cache[i]->head = NULL;
+        cache[i]->tail = NULL;
         cache[i]->occupied = 0;
         cache[i]->capacity = lines;
 	}
