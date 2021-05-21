@@ -57,13 +57,14 @@ typedef struct Set {
 
 /* Function checks if set is empty. Returns 1 if empty, else 0.*/
 int isSetEmpty(Set * set) {
-	if(set == NULL) {
+    assert(set != NULL);
     return set->tail == NULL;
 }
 
 /* Function checks if set is full. Returns 1 if full, else 0*/
 int isSetFull(Set * set){
-	return set->capacity == set->occupied;
+	assert(set != NULL);
+    return set->capacity == set->occupied;
 }
 
 /* Use this function to create a new line[node] to add to the set[queue]. */
@@ -79,7 +80,9 @@ Line * newLine(unsigned long tag) {
  *
  * Use when there is a cache miss, i.e., when line is not already in the set.*/
 void addLine(Set * set, unsigned long tag) {
-	
+    
+    assert(set != NULL);
+
 	Line * temp = newLine(tag);// Create a new line [new node].
 	
 	// Add new line to set [node goes at the head of queue].
@@ -94,15 +97,16 @@ void addLine(Set * set, unsigned long tag) {
 		set->head->ahead = temp; // Node at top of Q moves temp ahead of itself.
 		set->head = temp; // Q points to temp as its head.
 	}
-
     set->occupied++;
 }
 
 /* Function moves existing node to the head of the queue.
  * Use when there is a cache hit, i.e., for when line is already in set.*/
 void moveToHeadOfQ(Set * set, Line * line) {
+    
+    assert(set != NULL && line != NULL);    
 	
-	// When node[line] is not at the head of queue[set].
+    // When node[line] is not at the head of queue[set].
 	if (line != set->head) {
 		// Unlink node from its current location in queue.
 		line->ahead->behind = line->behind;
@@ -131,7 +135,10 @@ void moveToHeadOfQ(Set * set, Line * line) {
 
 /* Function removes a line from set [dequeues node of queue].*/
 void removeLine(Set * set) {
-	if (isSetEmpty(set)) {
+	
+    assert(set != NULL);
+
+    if (isSetEmpty(set)) {
 		return;
 	}
 
@@ -167,6 +174,9 @@ unsigned long getTag(unsigned long address, int s, int b) {
 /* Function checks if a line is in set. Use to see  if address exists in cache.
  * Returns pointer to the line in set.*/
 Line * findLineInSet(Set * set, unsigned long tag){
+    
+    assert(set != NULL);
+    
     Line * temp = set->head; // Point to the most recently used line in set.
     
     while(temp){// While there is a line to check...
@@ -179,7 +189,7 @@ Line * findLineInSet(Set * set, unsigned long tag){
 }
 
 void printSummary(int hit, int miss, int eviction){
-    printf("hits: %d, misses: %d, evictions: %d\n", hit, miss, eviction);
+    printf("hits:%d misses:%d evictions:%d\n", hit, miss, eviction);
 }
 
 int main(int argc, char *argv[]){
