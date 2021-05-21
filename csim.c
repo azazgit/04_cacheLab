@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 
 #define EXIT_FAILURE 1
 void print_usage(){
@@ -23,7 +24,7 @@ void print_help() {
 
 /* Power function to calculate no of sets and block_size */
 static int powfunc(int base, int exp) {
-	int result = 1;
+    int result = 1;
 	int exponent;
 	for (exponent = exp; exponent > 0; exponent--){
 		result *= base;
@@ -32,15 +33,17 @@ static int powfunc(int base, int exp) {
 }
 
 /* LRU implementation
- * Cache is implemented as an array of sets [see struct Set below].
- * Each set is represented by a queue.
+ * Cache is implemented as an array of set pointers.
+ * Each set pointer points to a set.
+ * Each set is a Set struct [see below].
+ * Each set keeps track of its line as a queue, pointing to the head and tail of its queue.
  * The queues are implemented using doubly linked list of nodes.
  * Each node represents one line of the set.
  */ 
 
 typedef struct Line {
 	unsigned long tag; // Within in each set, the tag uniquely identifies the line.
-	struct Line * ahead;// Point to the line ahead of this one  in the queue.
+	struct Line * ahead;// Point to the line ahead of this one in the queue.
 	struct Line * behind;// Point to line behind this one in the queue.
 	int valid;// vaild bit.
 }Line;
@@ -54,7 +57,8 @@ typedef struct Set {
 
 /* Function checks if set is empty. Returns 1 if empty, else 0.*/
 int isSetEmpty(Set * set) {
-	return set->tail == NULL;
+	if(set == NULL) {
+    return set->tail == NULL;
 }
 
 /* Function checks if set is full. Returns 1 if full, else 0*/
