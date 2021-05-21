@@ -9,7 +9,16 @@
 #define EXIT_FAILURE 1
 void print_usage(){
 	printf("Usage: ./csim -s <s> -E <E> -b <b> -t <tracefile>\n");
-	exit(EXIT_FAILURE);
+}
+
+/* Function prints help instructions for when -h cmd line arg is used. */
+void print_help() {
+    printf("-h: Optional help flag that prints usage info\n\n");
+    printf("-v: Optional verbose flag that displays trace info\n\n");
+    printf("-s <s>: Number of set index bits (S = 2^s is the number of sets)\n\n");
+    printf("-E <E>: Associativity (number of lines per set)\n\n");
+    printf("-b <b>: Number of block bits (B = 2b is the block size)\n\n");
+    printf("-t <tracefile>: Name of the valgrind trace to replay\n\n");
 }
 
 /* Power function to calculate no of sets and block_size */
@@ -182,34 +191,32 @@ int main(int argc, char *argv[]){
 		switch (opt) {
 			case 's':
 				s = atoi(optarg);
-				printf("s: %d\n", atoi(optarg));
 				break;
 			case 'E':
 				lines = atoi(optarg);
-				printf("E: %d\n", atoi(optarg));
 				break;
 			case 'b':
 				b = atoi(optarg);
-				printf("b: %d\n", atoi(optarg));
 				break;
 			case 't':
 				pFile = fopen(optarg, "r");
 				if (pFile == NULL) {
 					printf("Unable to open %s\n", optarg);
 					print_usage();
+	                exit(EXIT_FAILURE);
 				}		
-				printf("file: %s\n\n", optarg);
 				break;
 			case 'h':
-				printf("help option chosen \n");
-				printf("Usage: ./csim -s <s> -E <E> -b <b> -t <tracefile>\n");
-				break;
+				print_usage();
+                print_help();
+                break;
             case 'v':
                 printf("verbose chosen. \n");
                 verbose = 1;
                 break;
 			default: /* '?' */
 				print_usage();
+                exit(EXIT_FAILURE);
 		}
 	}
 	/* End of Parse command line args. */
