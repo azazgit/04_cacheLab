@@ -274,97 +274,74 @@ int main(int argc, char *argv[]){
 		unsigned long setIndex = getSetIndex(address, sets, blockSize);
 		unsigned tag = getTag(address, s, b); 
 		
-		// If Load instruction:
-		if (identifier == 'L' || identifier == 'S') {
+        // When set is empty...
+        if(isSetEmpty(cache[setIndex])){
             
-            // If set is empty, add the address to cache.
-            if(isSetEmpty(cache[setIndex])){
-                addLine(cache[setIndex], tag);
-                misses++;
-                if (verbose) {
-                    printf("buffer: %s miss\n", buffer);
+            addLine(cache[setIndex], tag);
+            misses++; // Load and store will cold miss.
+            if (identifier == 'M') {hits++;} // After load, store will hit.    
+            
+            if (verbose) {
+                    if (identifier == 'M') {
+                        printf("%s miss hit\n", buffer);
+                    }
+                    else {
+                        printf("%s miss\n", buffer);
+                    }
                 }
             }
 
-            // Set is not empty.
-            else {// Check if address exists in cache.
-
-                Line * lineFound = findLineInSet(cache[setIndex], tag);
+        // When set is not empty...
+        else {
+            // Check if address exists in cache.
+            Line * lineFound = findLineInSet(cache[setIndex], tag);
+            
+            if(lineFound) {// Address is in cache.   
+                    
+                hits++; // Both load and store will hit.
                 
-                if(lineFound) {// Address is in cache.   
-                    hits++;
-		            if (verbose) {
-                        printf("buffer: %s hit\n ", buffer);
-                    }
-                    moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
-                }
-                else{// Address is not in cache.
-                    misses++;
-		            if (verbose) {
-                        printf("buffer: %s miss\n", buffer);
+                if (identifier == 'M') {hits++;} // After load, store will hit.
+		        
+                if (verbose) {
+                        if (identifier == 'M') {
+                            printf("%s hit hit\n ", buffer);
+                        }
+                        else {
+                            printf("%s hit\n", buffer);
+                        }
                     }
 
-                    if(isSetFull(cache[setIndex])){
-                        removeLine(cache[setIndex]);
-                        evictions++;
-                        printf("address is not in cache. L eviction\n");
-                    }
-                    addLine(cache[setIndex], tag);
-                }
+                moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
             }
-	    }
-		//end of if (identifier == 'L') {
-        
-        // If store instruction:
-        else if(identifier == 'M') {
             
-            // If set is empty, add the address to cache.
-            if(isSetEmpty(cache[setIndex])){
-                addLine(cache[setIndex], tag);
-                misses++; // load is a miss.
-		        printf("Empty cache miss. \n");
-                printf("buffer: %s ", buffer);
-                printf("miss\n");
-                printf("==================\n\n");
-                hits++; // store is a hit.
-		        printf("Hit after empty cache miss. \n");
-                printf("buffer: %s ", buffer);
-                printf("hit\n");
-                printf("==================\n\n");
-            }
-
-            // Set is not empty.
-            else{
-                Line * lineFound = findLineInSet(cache[setIndex], tag);
-
-                if(lineFound) {// Addres is in cache.
-                    hits++; // load is a hit.
-		            printf("buffer: %s ", buffer);
-                    printf("load hit\n");
-                    printf("==================\n\n");
-                    hits++; // store is a hit.
-		            printf("buffer: %s ", buffer);
-                    printf("store hit\n");
-                    printf("==================\n\n");
-                    moveToHeadOfQ(cache[setIndex], lineFound);
-                }
-
-                else {// Address is not in cache.
-                    misses++; // load is a miss.
-		            printf("buffer: %s ", buffer);
-                    printf("load miss\n");
-                    printf("==================\n\n");
-                    hits++; // store is a hit.
-		            printf("buffer: %s ", buffer);
-                    printf("store hits after load miss\n");
-                    printf("==================\n\n");
-                    if(isSetFull(cache[setIndex])){
-                        removeLine(cache[setIndex]);
-                        evictions++;
-                        printf("eviction\n");
+            else{// Address is not in cache.
+                    
+                misses++; // Both load and store will miss.
+                if (identifier == 'M'){hits++;} // After load, store will hit.    
+                
+                if(isSetFull(cache[setIndex])){
+                    removeLine(cache[setIndex]);
+                    evictions++;
+                    if (verbose) {
+                        if (identifier == 'M') {
+                            printf("%s miss eviction hit\n", buffer);
+                        }
+                        else {
+                            printf("%s miss eviction\n", buffer);
+                        }
                     }
-                    addLine(cache[setIndex], tag);
                 }
+                else{// Set is partially full and there is cache miss.
+                    if (verbose) {
+                        if (identifier == 'M') {
+                            printf("%s miss hit\n", buffer);
+                        }
+                        else {
+                            printf("%s miss\n", buffer);
+                        }
+                    }
+                }
+                addLine(cache[setIndex], tag);
             }
         }
     }
