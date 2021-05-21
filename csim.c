@@ -188,8 +188,8 @@ Line * findLineInSet(Set * set, unsigned long tag){
     return NULL;
 }
 
-void printSummary(int hit, int miss, int eviction){
-    printf("hits:%d misses:%d evictions:%d\n", hit, miss, eviction);
+void printSummary(int hits, int misses, int evictions){
+    printf("hits:%d misses:%d evictions:%d\n", hits, misses, evictions);
 }
 
 int main(int argc, char *argv[]){
@@ -237,11 +237,7 @@ int main(int argc, char *argv[]){
 	
 	/* Set up cache data structure. */
 	unsigned long sets = powfunc(2, s);
-	printf("sets: %ld\n", sets);
 	int blockSize = powfunc(2, b);
-	printf("blockSize: %d\n", blockSize);
-    printf("================\n\n");	
-
 
 	// Cache holds ptr to array of set ptrs.
 	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
@@ -262,8 +258,8 @@ int main(int argc, char *argv[]){
 	unsigned long address;
 	int size;
 	char buffer[50]; // fgets() uses buffer to store each new line from tracefile.
-	int hit = 0;
-	int miss = 0;
+	int hits= 0;
+	int misses = 0;
     int evictions = 0;
 	while(fgets(buffer, 50, pFile) > 0) {
 		buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
@@ -272,10 +268,10 @@ int main(int argc, char *argv[]){
 		if (buffer[0] == ' '){// Line has M, L or S.
 			sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
 		}
-		else {// Line has I.
-			sscanf(buffer, "%c %lx,%d\n", &identifier, &address, &size); 
-		}
-		printf("identifier: %c\n", identifier);
+
+        else {continue;} // Ignore I instructions and go to next line in file.
+		
+        printf("identifier: %c\n", identifier);
 		printf("address in hex: %lx\n", address);		
 		printf("address: %ld\n", address);		
 		//printf("size: %d\n", size);		
@@ -292,10 +288,10 @@ int main(int argc, char *argv[]){
             // If set is empty, add the address to cache.
             if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
-                miss++;
+                misses++;
 		        printf("Empty cache miss. \n");
                 printf("buffer: %s ", buffer);
-                printf("miss\n");
+                printf("misses\n");
                 printf("==================\n\n");
             }
 
@@ -305,15 +301,15 @@ int main(int argc, char *argv[]){
                 Line * lineFound = findLineInSet(cache[setIndex], tag);
                 
                 if(lineFound) {// Address is in cache.   
-                    hit++;
+                    hits++;
 		            printf("buffer: %s ", buffer);
-                    printf("hit\n");
+                    printf("hits\n");
                     printf("==================\n\n");
                     moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
                 }
 
                 else{// Address is not in cache.
-                    miss++;
+                    misses++;
                     printf("Address not in cache miss.\n");
 		            printf("buffer: %s ", buffer);
                     printf("miss\n");
@@ -339,12 +335,12 @@ int main(int argc, char *argv[]){
             // If set is empty, add the address to cache.
             if(isSetEmpty(cache[setIndex])){
                 addLine(cache[setIndex], tag);
-                miss++; // load is a miss.
+                misses++; // load is a miss.
 		        printf("Empty cache miss. \n");
                 printf("buffer: %s ", buffer);
                 printf("miss\n");
                 printf("==================\n\n");
-                hit++; // store is a hit.
+                hits++; // store is a hit.
 		        printf("Hit after empty cache miss. \n");
                 printf("buffer: %s ", buffer);
                 printf("hit\n");
@@ -356,11 +352,11 @@ int main(int argc, char *argv[]){
                 Line * lineFound = findLineInSet(cache[setIndex], tag);
 
                 if(lineFound) {// Addres is in cache.
-                    hit++; // load is a hit.
+                    hits++; // load is a hit.
 		            printf("buffer: %s ", buffer);
                     printf("load hit\n");
                     printf("==================\n\n");
-                    hit++; // store is a hit.
+                    hits++; // store is a hit.
 		            printf("buffer: %s ", buffer);
                     printf("store hit\n");
                     printf("==================\n\n");
@@ -368,11 +364,11 @@ int main(int argc, char *argv[]){
                 }
 
                 else {// Address is not in cache.
-                    miss++; // load is a miss.
+                    misses++; // load is a miss.
 		            printf("buffer: %s ", buffer);
                     printf("load miss\n");
                     printf("==================\n\n");
-                    hit++; // store is a hit.
+                    hits++; // store is a hit.
 		            printf("buffer: %s ", buffer);
                     printf("store hits after load miss\n");
                     printf("==================\n\n");
@@ -400,7 +396,7 @@ int main(int argc, char *argv[]){
 	cache = NULL;
 	/* End of free all dynamically allocated memory. */
 
-    printSummary(hit, miss, evictions);
+    printSummary(hits, misses, evictions);
 
     return 0;
 }
