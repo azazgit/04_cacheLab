@@ -14,12 +14,12 @@ void print_usage(){
 
 /* Function prints help instructions for when -h cmd line arg is used. */
 void print_help() {
-    printf("-h: Optional help flag that prints usage info\n\n");
-    printf("-v: Optional verbose flag that displays trace info\n\n");
-    printf("-s <s>: Number of set index bits (S = 2^s is the number of sets)\n\n");
-    printf("-E <E>: Associativity (number of lines per set)\n\n");
-    printf("-b <b>: Number of block bits (B = 2b is the block size)\n\n");
-    printf("-t <tracefile>: Name of the valgrind trace to replay\n\n");
+    printf("-h: Optional help flag that prints usage info\n\n"
+            "-v: Optional verbose flag that displays trace info\n\n"
+            "-s <s>: Number of set index bits (S = 2^s is the number of sets)\n\n"
+            "-E <E>: Associativity (number of lines per set)\n\n"
+            "-b <b>: Number of block bits (B = 2b is the block size)\n\n"
+            "-t <tracefile>: Name of the valgrind trace to replay\n\n");
 }
 
 /* LRU implementation
@@ -153,7 +153,7 @@ void removeLine(Set * set) {
 /* Function returns the set index when given an address */
 //https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf [/lec16.pdf]
 unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
-	return (address/blockSize)%sets; 
+	return (address / blockSize)%sets; 
 }
 
 /* Function returns the tag when given an address, s and b bits. */
@@ -232,7 +232,6 @@ int main(int argc, char *argv[]){
                 print_help();
                 break;
             case 'v':
-                printf("verbose chosen. \n");
                 verbose = 1;
                 break;
 			default: /* '?' */
@@ -322,7 +321,7 @@ int main(int argc, char *argv[]){
                         if (identifier == 'M') {printf(" hit");}
                         printf("\n");
                     }
-                addLine(cache[setIndex], tag);
+                    addLine(cache[setIndex], tag);
                 }
             }
         }
