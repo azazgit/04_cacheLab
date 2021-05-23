@@ -335,13 +335,14 @@ int main(int argc, char *argv[]){
                 exit(EXIT_FAILURE);
 		}
 	}
-	/* End of Parse command line args. */
 	
 	/* Set up cache data structure. */
     Set ** cache = setUp_cache(b, s, E); 
 
+    /* Run the simulation. */
     run(cache, pFile, b, s, E, verbose);
 
+    /* Free all heap allocated memory. */
     free_cache(cache, s);
 
     return 0;
