@@ -208,13 +208,12 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
 		
         buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
 		
-		if (buffer[0] == ' '){// Line has M, L or S.
-			sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
-		}
-        else {continue;} // Ignore I instructions and go to next line in file.
+		if (buffer[0] == 'I'){continue;} // Ignore I.
+		
+        sscanf(buffer, " %c %lx,%d\n", &identifier, &address, &size);
 		
         // Get set index and tag for the given address.
-        int blockSize = 1<<b;
+        int blockSize = 1 << b;
 		unsigned long setIndex = (address / blockSize) % sets;
 		unsigned tag = address >> (s + b); 
 		
@@ -226,7 +225,7 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
             if (identifier == 'M') {hits++;} // After load, store will hit.    
             
             if (verbose) {
-                printf("%s miss", buffer); // For load and store misses.    
+                printf("%s miss", buffer+1); // For load and store misses.    
                 if (identifier == 'M') {printf(" hit");}
                 printf("\n");
             }
@@ -244,7 +243,7 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
                 if (identifier == 'M') {hits++;} // After load, store will hit.
 		        
                 if (verbose) {
-                    printf("%s hit", buffer); // For load and store misses.    
+                    printf("%s hit", buffer+1); // For load and store misses.    
                     if (identifier == 'M') {printf(" hit");}
                     printf("\n");
                 }
@@ -261,14 +260,14 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
                     removeLine(cache[setIndex]);
                     evictions++;
                     if (verbose) {
-                        printf("%s miss eviction", buffer); // For load and store misses.    
+                        printf("%s miss eviction", buffer+1); // For load and store misses.    
                         if (identifier == 'M') {printf(" hit");}
                         printf("\n");
                     }
                 }
                 else{// Set is partially full and there is cache miss.
                     if (verbose) {
-                        printf("%s miss", buffer); // For load and store misses.    
+                        printf("%s miss", buffer+1); // For load and store misses.    
                         if (identifier == 'M') {printf(" hit");}
                         printf("\n");
                     }
