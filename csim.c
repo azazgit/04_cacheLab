@@ -246,7 +246,6 @@ int main(int argc, char *argv[]){
     unsigned long sets = 1<<s;
     int blockSize = 1<<b;
     Set ** cache = setUp_cache(sets, blockSize, b, s, E); 
-	/* End of Set up cache data structure. */
 	
     /* Parse trace file */ 
 	char identifier;
@@ -277,14 +276,11 @@ int main(int argc, char *argv[]){
             if (identifier == 'M') {hits++;} // After load, store will hit.    
             
             if (verbose) {
-                    if (identifier == 'M') {
-                        printf("%s miss hit\n", buffer);
-                    }
-                    else {
-                        printf("%s miss\n", buffer);
-                    }
-                }
+                printf("%s miss", buffer); // For load and store misses.    
+                if (identifier == 'M') {printf(" hit");}
+                printf("\n");
             }
+        }
 
         // When set is not empty...
         else {
@@ -298,13 +294,10 @@ int main(int argc, char *argv[]){
                 if (identifier == 'M') {hits++;} // After load, store will hit.
 		        
                 if (verbose) {
-                        if (identifier == 'M') {
-                            printf("%s hit hit\n ", buffer);
-                        }
-                        else {
-                            printf("%s hit\n", buffer);
-                        }
-                    }
+                    printf("%s hit", buffer); // For load and store misses.    
+                    if (identifier == 'M') {printf(" hit");}
+                    printf("\n");
+                }
 
                 moveToHeadOfQ(cache[setIndex], lineFound);//Update queue.
             }
@@ -318,25 +311,19 @@ int main(int argc, char *argv[]){
                     removeLine(cache[setIndex]);
                     evictions++;
                     if (verbose) {
-                        if (identifier == 'M') {
-                            printf("%s miss eviction hit\n", buffer);
-                        }
-                        else {
-                            printf("%s miss eviction\n", buffer);
-                        }
+                        printf("%s miss eviction", buffer); // For load and store misses.    
+                        if (identifier == 'M') {printf(" hit");}
+                        printf("\n");
                     }
                 }
                 else{// Set is partially full and there is cache miss.
                     if (verbose) {
-                        if (identifier == 'M') {
-                            printf("%s miss hit\n", buffer);
-                        }
-                        else {
-                            printf("%s miss\n", buffer);
-                        }
+                        printf("%s miss", buffer); // For load and store misses.    
+                        if (identifier == 'M') {printf(" hit");}
+                        printf("\n");
                     }
-                }
                 addLine(cache[setIndex], tag);
+                }
             }
         }
     }
