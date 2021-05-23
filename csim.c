@@ -321,8 +321,8 @@ int main(int argc, char *argv[]){
                         if (identifier == 'M') {printf(" hit");}
                         printf("\n");
                     }
-                    addLine(cache[setIndex], tag);
                 }
+            addLine(cache[setIndex], tag);
             }
         }
     }
