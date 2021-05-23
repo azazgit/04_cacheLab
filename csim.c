@@ -241,7 +241,6 @@ int main(int argc, char *argv[]){
 	
     /* Parse trace file */ 
     unsigned long sets = 1<<s;
-    int blockSize = 1<<b;
 	char identifier;
 	unsigned long address;
 	int size;
@@ -259,8 +258,9 @@ int main(int argc, char *argv[]){
         else {continue;} // Ignore I instructions and go to next line in file.
 		
         // Get set index and tag for the given address.
+        int blockSize = 1<<b;
 		unsigned long setIndex = (address / blockSize) % sets;
-		unsigned tag = address >> (s +b); 
+		unsigned tag = address >> (s + b); 
 		
         // When set is empty...
         if(isSetEmpty(cache[setIndex])){
