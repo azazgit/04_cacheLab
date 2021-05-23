@@ -22,16 +22,6 @@ void print_help() {
     printf("-t <tracefile>: Name of the valgrind trace to replay\n\n");
 }
 
-/* Power function to calculate no of sets and block_size */
-static int powfunc(int base, int exp) {
-    int result = 1;
-	int exponent;
-	for (exponent = exp; exponent > 0; exponent--){
-		result *= base;
-	}
-	return result;
-}
-
 /* LRU implementation
  * Cache is implemented as an array of set pointers.
  * Each set pointer points to a set.
