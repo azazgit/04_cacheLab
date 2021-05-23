@@ -236,9 +236,10 @@ int main(int argc, char *argv[]){
 	/* End of Parse command line args. */
 	
 	/* Set up cache data structure. */
-	unsigned long sets = powfunc(2, s);
-	int blockSize = powfunc(2, b);
-
+	//unsigned long sets = powfunc(2, s);
+    unsigned long sets = 1<<s;
+	//int blockSize = powfunc(2, b);
+    int blockSize = 1<<b;
 	// Cache holds ptr to array of set ptrs.
 	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
 	
