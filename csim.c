@@ -150,16 +150,6 @@ void removeLine(Set * set) {
 	free(temp); // Free up the memory of the removed line [dequeued node].
 }
 
-/* Function returns the set index when given an address */
-//https://courses.cs.washington.edu/courses/cse378/09wi/lectures/lec15.pdf [/lec16.pdf]
-unsigned long getSetIndex(unsigned long address, unsigned long sets, int blockSize){
-	return (address / blockSize)%sets; 
-}
-
-/* Function returns the tag when given an address, s and b bits. */
-unsigned long getTag(unsigned long address, int s, int b) {
-	return address >> (s + b);
-}
 
 /* Function checks if a line is in set. Use to see  if address exists in cache.
  * Returns pointer to the line in set.*/
@@ -247,11 +237,11 @@ int main(int argc, char *argv[]){
 	/* End of Parse command line args. */
 	
 	/* Set up cache data structure. */
-    unsigned long sets = 1<<s;
-    int blockSize = 1<<b;
     Set ** cache = setUp_cache(b, s, E); 
 	
     /* Parse trace file */ 
+    unsigned long sets = 1<<s;
+    int blockSize = 1<<b;
 	char identifier;
 	unsigned long address;
 	int size;
@@ -269,8 +259,8 @@ int main(int argc, char *argv[]){
         else {continue;} // Ignore I instructions and go to next line in file.
 		
         // Get set index and tag for the given address.
-		unsigned long setIndex = getSetIndex(address, sets, blockSize);
-		unsigned tag = getTag(address, s, b); 
+		unsigned long setIndex = (address / blockSize) % sets;
+		unsigned tag = address >> (s +b); 
 		
         // When set is empty...
         if(isSetEmpty(cache[setIndex])){
