@@ -183,8 +183,13 @@ void printSummary(int hits, int misses, int evictions){
 }
 
 
-Set ** setUp_cache(unsigned long sets, int blockSize, int b, int s, int E) {
-	// Cache holds ptr to array of set ptrs.
+Set ** setUp_cache(int b, int s, int E) {
+	
+    // Get no of sets and block size.
+    unsigned long sets = 1 << s;
+    int blockSize = 1 << b;
+
+    // Cache holds ptr to array of set ptrs.
 	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
 	
     // Each set ptr points to a Set struct.
@@ -244,7 +249,7 @@ int main(int argc, char *argv[]){
 	/* Set up cache data structure. */
     unsigned long sets = 1<<s;
     int blockSize = 1<<b;
-    Set ** cache = setUp_cache(sets, blockSize, b, s, E); 
+    Set ** cache = setUp_cache(b, s, E); 
 	
     /* Parse trace file */ 
 	char identifier;
