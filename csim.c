@@ -182,12 +182,29 @@ void printSummary(int hits, int misses, int evictions){
     printf("hits:%d misses:%d evictions:%d\n", hits, misses, evictions);
 }
 
+
+Set ** setUp_cache(unsigned long sets, int blockSize, int b, int s, int E) {
+	// Cache holds ptr to array of set ptrs.
+	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
+	
+    // Each set ptr points to a Set struct.
+    int i;
+    for(i = 0; i < sets; i++){
+        cache[i] = malloc(sizeof(Set));
+        cache[i]->head = NULL;
+        cache[i]->tail = NULL;
+        cache[i]->occupied = 0;
+        cache[i]->capacity = E;
+    }
+    return cache;
+}
+
 int main(int argc, char *argv[]){
 	
 	/* Parse command line args. */
 	int opt; 
 	int s;
-	int lines; // E 
+	int E; // lines 
 	int b;
     int verbose = 0;
     FILE * pFile; 
@@ -197,7 +214,7 @@ int main(int argc, char *argv[]){
 				s = atoi(optarg);
 				break;
 			case 'E':
-				lines = atoi(optarg);
+				E = atoi(optarg);
 				break;
 			case 'b':
 				b = atoi(optarg);
@@ -226,25 +243,12 @@ int main(int argc, char *argv[]){
 	/* End of Parse command line args. */
 	
 	/* Set up cache data structure. */
-	//unsigned long sets = powfunc(2, s);
     unsigned long sets = 1<<s;
-	//int blockSize = powfunc(2, b);
     int blockSize = 1<<b;
-	// Cache holds ptr to array of set ptrs.
-	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
-	
-    // Each set ptr points to a Set struct.
-    int i;
-    for(i = 0; i < sets; i++){
-        cache[i] = malloc(sizeof(Set));
-        cache[i]->head = NULL;
-        cache[i]->tail = NULL;
-        cache[i]->occupied = 0;
-        cache[i]->capacity = lines;
-	}
+    Set ** cache = setUp_cache(sets, blockSize, b, s, E); 
 	/* End of Set up cache data structure. */
-
-	/* Parse trace file */ 
+	
+    /* Parse trace file */ 
 	char identifier;
 	unsigned long address;
 	int size;
@@ -339,6 +343,7 @@ int main(int argc, char *argv[]){
 	fclose(pFile);
 	/* End of Parse trace file. */
 
+    int i;
     for (i = 0; i < sets; i++) {
 	    while(!isSetEmpty(cache[i])){
            removeLine(cache[i]); // Dequeue each node in queue.
