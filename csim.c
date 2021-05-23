@@ -168,16 +168,10 @@ Line * findLineInSet(Set * set, unsigned long tag){
     return NULL;
 }
 
-void printSummary(int hits, int misses, int evictions){
-    printf("hits:%d misses:%d evictions:%d\n", hits, misses, evictions);
-}
-
-
 Set ** setUp_cache(int b, int s, int E) {
 	
     // Get no of sets and block size.
     unsigned long sets = 1 << s;
-    int blockSize = 1 << b;
 
     // Cache holds ptr to array of set ptrs.
 	Set ** cache = (Set **) malloc(sizeof(Set *) * sets);
@@ -194,16 +188,17 @@ Set ** setUp_cache(int b, int s, int E) {
     return cache;
 }
 
-void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {   
+void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose,
+        int * hits, int * misses, int * evictions) {   
     /* Parse trace file */ 
     unsigned long sets = 1<<s;
 	char identifier;
 	unsigned long address;
 	int size;
 	char buffer[50]; // fgets() uses buffer to store each new line from tracefile.
-	int hits= 0;
-	int misses = 0;
-    int evictions = 0;
+	//int hits= 0;
+	//int misses = 0;
+    //int evictions = 0;
 	while(fgets(buffer, 50, pFile) > 0) {
 		
         buffer[strlen(buffer)-1] = '\0';// Remove trailing '\n' in the line in file.
@@ -221,8 +216,8 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
         if(isSetEmpty(cache[setIndex])){
             
             addLine(cache[setIndex], tag);
-            misses++; // Load and store will cold miss.
-            if (identifier == 'M') {hits++;} // After load, store will hit.    
+            (*misses)++; // Load and store will cold miss.
+            if (identifier == 'M') {(*hits)++;} // After load, store will hit.    
             
             if (verbose) {
                 printf("%s miss", buffer+1); // For load and store misses.    
@@ -238,9 +233,9 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
             
             if(lineFound) {// Address is in cache.   
                     
-                hits++; // Both load and store will hit.
+                (*hits)++; // Both load and store will hit.
                 
-                if (identifier == 'M') {hits++;} // After load, store will hit.
+                if (identifier == 'M') {(*hits)++;} // After load, store will hit.
 		        
                 if (verbose) {
                     printf("%s hit", buffer+1); // For load and store misses.    
@@ -253,12 +248,12 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
             
             else{// Address is not in cache.
                     
-                misses++; // Both load and store will miss.
-                if (identifier == 'M'){hits++;} // After load, store will hit.    
+                (*misses)++; // Both load and store will miss.
+                if (identifier == 'M'){(*hits)++;} // After load, store will hit.    
                 
                 if(isSetFull(cache[setIndex])){
                     removeLine(cache[setIndex]);
-                    evictions++;
+                    (*evictions)++;
                     if (verbose) {
                         printf("%s miss eviction", buffer+1); // For load and store misses.    
                         if (identifier == 'M') {printf(" hit");}
@@ -277,7 +272,6 @@ void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {
         }
     }
 	fclose(pFile);
-    printSummary(hits, misses, evictions);
 }
 
 void free_cache(Set ** cache, int s) {
@@ -339,10 +333,14 @@ int main(int argc, char *argv[]){
     Set ** cache = setUp_cache(b, s, E); 
 
     /* Run the simulation. */
-    run(cache, pFile, b, s, E, verbose);
+    int hits = 0;
+    int misses = 0;
+    int evictions = 0;
+    run(cache, pFile, b, s, E, verbose, &hits, &misses, &evictions);
 
     /* Free all heap allocated memory. */
     free_cache(cache, s);
 
+    printSummary(hits, misses, evictions);
     return 0;
 }
