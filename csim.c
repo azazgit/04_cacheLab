@@ -194,51 +194,7 @@ Set ** setUp_cache(int b, int s, int E) {
     return cache;
 }
 
-int main(int argc, char *argv[]){
-	
-	/* Parse command line args. */
-	int opt; 
-	int s;
-	int E; // lines 
-	int b;
-    int verbose = 0;
-    FILE * pFile; 
-	while ((opt = getopt(argc, argv, "s:E:b:t:hv")) != -1) {
-		switch (opt) {
-			case 's':
-				s = atoi(optarg);
-				break;
-			case 'E':
-				E = atoi(optarg);
-				break;
-			case 'b':
-				b = atoi(optarg);
-				break;
-			case 't':
-				pFile = fopen(optarg, "r");
-				if (pFile == NULL) {
-					printf("Unable to open %s\n", optarg);
-					print_usage();
-	                exit(EXIT_FAILURE);
-				}		
-				break;
-			case 'h':
-				print_usage();
-                print_help();
-                break;
-            case 'v':
-                verbose = 1;
-                break;
-			default: /* '?' */
-				print_usage();
-                exit(EXIT_FAILURE);
-		}
-	}
-	/* End of Parse command line args. */
-	
-	/* Set up cache data structure. */
-    Set ** cache = setUp_cache(b, s, E); 
-	
+void run(Set ** cache, FILE * pFile, int b, int s, int E, int verbose) {   
     /* Parse trace file */ 
     unsigned long sets = 1<<s;
 	char identifier;
@@ -322,9 +278,12 @@ int main(int argc, char *argv[]){
         }
     }
 	fclose(pFile);
-	/* End of Parse trace file. */
+    printSummary(hits, misses, evictions);
+}
 
+void free_cache(Set ** cache, int s) {
     int i;
+    unsigned long sets = 1 << s;
     for (i = 0; i < sets; i++) {
 	    while(!isSetEmpty(cache[i])){
            removeLine(cache[i]); // Dequeue each node in queue.
@@ -334,9 +293,56 @@ int main(int argc, char *argv[]){
     } 
     free(cache);
 	cache = NULL;
-	/* End of free all dynamically allocated memory. */
+}
 
-    printSummary(hits, misses, evictions);
+int main(int argc, char *argv[]){
+	
+	/* Parse command line args. */
+	int opt; 
+	int s;
+	int E; // lines 
+	int b;
+    int verbose = 0;
+    FILE * pFile; 
+	while ((opt = getopt(argc, argv, "s:E:b:t:hv")) != -1) {
+		switch (opt) {
+			case 's':
+				s = atoi(optarg);
+				break;
+			case 'E':
+				E = atoi(optarg);
+				break;
+			case 'b':
+				b = atoi(optarg);
+				break;
+			case 't':
+				pFile = fopen(optarg, "r");
+				if (pFile == NULL) {
+					printf("Unable to open %s\n", optarg);
+					print_usage();
+	                exit(EXIT_FAILURE);
+				}		
+				break;
+			case 'h':
+				print_usage();
+                print_help();
+                break;
+            case 'v':
+                verbose = 1;
+                break;
+			default: /* '?' */
+				print_usage();
+                exit(EXIT_FAILURE);
+		}
+	}
+	/* End of Parse command line args. */
+	
+	/* Set up cache data structure. */
+    Set ** cache = setUp_cache(b, s, E); 
+
+    run(cache, pFile, b, s, E, verbose);
+
+    free_cache(cache, s);
 
     return 0;
 }
