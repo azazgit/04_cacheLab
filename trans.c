@@ -20,9 +20,31 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
  *     be graded. 
  */
 char transpose_submit_desc[] = "Transpose submission";
-void transpose_submit(int M, int N, int A[N][M], int B[M][N])
-{
+void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     
+    int ii, jj, i, j;
+    for(ii = 0; ii < N; ii += 8) {
+        for(jj = 0; jj < M; jj += 8){
+            for(i = ii; i < ii + 8; i++) {
+                for(j = jj; j < jj + 8; j++){
+                    if(ii + i == jj + j) {continue;} // ignore diagonals.
+                    B[j][i] = A[i][j];
+                }
+            }
+        }
+    }
+
+    // Add diagonals.
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < M; j++) {
+            if (i == j) {
+                B[j][i] = A[i][j];
+            }
+        }
+    }
+    if (is_transpose(M, N, A, B)) {
+        printf("transposed correctly.");
+    }
 }
 
 /* 
@@ -30,6 +52,20 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
  * a simple one below to help you get started. 
  */ 
 
+char trans_00_desc[] = "Transpose 00";
+void trans_00(int M, int N, int A[N][M], int B[M][N]) {
+    
+    int ii, jj, i, j;
+    for(ii = 0; ii < N; ii += 8) {
+        for(jj = 0; jj < M; jj += 8){
+            for(i = ii; i < ii + 8; i++) {
+                for(j = jj; j < jj + 8; j++){
+                    B[j][i] = A[i][j];
+                }
+            }
+        }
+    }
+}
 /* 
  * trans - A simple baseline transpose function, not optimized for the cache.
  */
@@ -61,7 +97,8 @@ void registerFunctions()
 
     /* Register any additional transpose functions */
     registerTransFunction(trans, trans_desc); 
-
+    
+    registerTransFunction(trans_00, trans_00_desc);
 }
 
 /* 
