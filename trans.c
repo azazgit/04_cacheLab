@@ -66,6 +66,63 @@ void trans_00(int M, int N, int A[N][M], int B[M][N]) {
         }
     }
 }
+
+char trans_01_desc[] = "Transpose 01";
+void trans_01(int M, int N, int A[N][M], int B[M][N]) {
+    
+    int ii, jj, i, j;
+
+    int diag[8];
+
+    // Traverse 8x8 tiles horizontally.
+    for(ii = 0; ii < N; ii += 8) {
+        for(jj = 0; jj < M; jj += 8){
+            
+            // For i != j, transfer all Aij to Bji.
+            for(i = ii; i < ii + 8; i++) {
+                for(j = jj; j < jj + 8; j++){
+                    if (i == j) {
+                        diag[i%8] = A[i][i];
+                    }
+                    else {B[j][i] = A[i][j];}
+                }
+            }
+           // For i == j, transfer all Aii to Bii.
+           if (ii == jj) {
+              for (i = ii; i < ii + 8; i++) {
+                 B[i][i] = diag[i%8];
+              }
+           }
+          // Move onto next tile. 
+        }
+    }
+}
+
+
+char trans_algo_desc[] = "Youtube algo";
+void trans_algo(int M, int N, int A[N][M], int B[M][N])
+{
+    int ii, jj, i, j;
+
+    // Read Tiles into cache.
+    for (ii = 0; ii < 4; ii++) {
+        for (jj = 0; jj <= ii; jj++) {
+            
+            // Traverse tile row wise.        
+            for (i = ii*8; i < ii*8 + 8; i++) {
+                for (j = jj*8; j < jj*8 + 8; j++) {
+                    
+                    // Transfer Aij to Bji.
+                    B[j][i] = A[i][j];
+                    
+                    // Transfer Aji to Bij.
+                    B[i][j] = A[j][i];
+                }
+            }
+        }
+    }    
+}
+
 /* 
  * trans - A simple baseline transpose function, not optimized for the cache.
  */
@@ -83,6 +140,8 @@ void trans(int M, int N, int A[N][M], int B[M][N])
 
 }
 
+
+
 /*
  * registerFunctions - This function registers your transpose
  *     functions with the driver.  At runtime, the driver will
@@ -96,9 +155,11 @@ void registerFunctions()
     registerTransFunction(transpose_submit, transpose_submit_desc); 
 
     /* Register any additional transpose functions */
-    registerTransFunction(trans, trans_desc); 
+    //registerTransFunction(trans, trans_desc); 
     
-    registerTransFunction(trans_00, trans_00_desc);
+    //registerTransFunction(trans_00, trans_00_desc);
+    registerTransFunction(trans_01, trans_01_desc);
+    //registerTransFunction(trans_algo, trans_algo_desc);
 }
 
 /* 
