@@ -98,59 +98,8 @@ void trans_01(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
-char trans_02_desc[] = "64x64. 4x8. Delay diag. ";
-void trans_02(int M, int N, int A[N][M], int B[M][N]) {
-    
-    int ii, jj, i, j;
-
-    int diag[4];
-
-    // Traverse 8x8 tiles horizontally.
-    for(ii = 0; ii < N; ii += 4) {
-        for(jj = 0; jj < M; jj += 8){
-            
-            // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 4; i++) {
-                for(j = jj; j < jj + 8; j++){
-                    if (i == j) {
-                        diag[i%4] = A[i][i];
-                    }
-                    else {B[j][i] = A[i][j];}
-                }
-            }
-           // For i == j, transfer all Aii to Bii.
-           if ((ii == jj) || (ii - 4 == jj)) {
-              for (i = ii; i < ii + 4; i++) {
-                 B[i][i] = diag[i%4];
-              }
-           }
-          // Move onto next tile. 
-        }
-    }
-}
-
-char trans_03_desc[] = "64x64. 4x8. Inline diag. ";
-void trans_03(int M, int N, int A[N][M], int B[M][N]) {
-    
-    int ii, jj, i, j;
-
-    // Traverse 8x8 tiles horizontally.
-    for(ii = 0; ii < N; ii += 4) {
-        for(jj = 0; jj < M; jj += 8){
-            
-            // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 4; i++) {
-                for(j = jj; j < jj + 8; j++){
-                    B[j][i] = A[i][j];
-                }
-            }
-          // Move onto next tile. 
-        }
-    }
-}
-
-char trans_04_desc[] = "64x64. 4x4. Delay diag. ";
-void trans_04(int M, int N, int A[N][M], int B[M][N]) {
+char trans_64x64_4x4_desc[] = "64x64. 4x4. Delay diag. ";
+void trans_64x64_4x4(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
