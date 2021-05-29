@@ -9,6 +9,7 @@
  */ 
 #include <stdio.h>
 #include "cachelab.h"
+#define tileLength 8
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
@@ -23,6 +24,66 @@ int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     
+    int ii, jj, i, j;
+    
+    // 32 x 32 matrix. Blocksize 8 gives the best miss rate.
+    if (M == 32) {
+        int diag[8]; // Store diag values of the tile.
+
+        // Traverse 8x8 tiles horizontally.
+        for(ii = 0; ii < N; ii += 8) {
+            for(jj = 0; jj < M; jj += 8){
+            
+                // For i != j, transfer all Aij to Bji.
+                for(i = ii; i < min(N, ii + 8); i++) {
+                    for(j = jj; j < min(M, jj + 8); j++){
+                        if (i == j) {
+                            diag[i%8] = A[i][i];
+                        }
+                        else {B[j][i] = A[i][j];}
+                    }
+                }
+                // For i == j, transfer all Aii to Bii.
+                if (ii == jj) {
+                    for (i = ii; i < ii + 8; i++) {
+                        B[i][i] = diag[i%8];
+                    }
+                }
+                // Move onto next tile. 
+            }
+        }
+    }
+
+    // 64 x 64 matrix. Blocksize 4 gives the best miss rate.
+    if (M == 64) {
+        int diag[4];
+        
+        // Traverse 4x4 tiles horizontally.
+        for(ii = 0; ii < N; ii += 4) {
+            for(jj = 0; jj < M; jj += 4){
+            
+            // For i != j, transfer all Aij to Bji.
+            for(i = ii; i < min(N, ii + 4); i++) {
+                for(j = jj; j < min(M, jj + 4); j++){
+                    if (i == j) {
+                        diag[i%4] = A[i][i];
+                    }
+                    else {B[j][i] = A[i][j];}
+                }
+            }
+           // For i == j, transfer all Aii to Bii.
+           if (ii == jj) {
+              for (i = ii; i < ii + 4; i++) {
+                 B[i][i] = diag[i%4];
+              }
+           }
+          // Move onto next tile. 
+          }
+        }
+    }
+
+
+
 }
 
 /* 
@@ -45,7 +106,6 @@ void trans_00(int M, int N, int A[N][M], int B[M][N]) {
     }
 }*/
 
-# define tileLength 5 
 
 char trans_3232_id_desc[] = "3232. Inline diag. 343 misses with tilelength 8.";
 void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
@@ -200,14 +260,10 @@ void trans(int M, int N, int A[N][M], int B[M][N])
 void registerFunctions()
 {
     /* Register your solution function */
-    //registerTransFunction(transpose_submit, transpose_submit_desc); 
+    registerTransFunction(transpose_submit, transpose_submit_desc); 
 
     /* Register any additional transpose functions */
-    
-    //registerTransFunction(trans_00, trans_00_desc);
-    //registerTransFunction(trans_3232_id, trans_3232_id_desc);
-    //registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
-    registerTransFunction(trans_6464_id, trans_6464_id_desc);
+    registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
     registerTransFunction(trans_6464_dd, trans_6464_dd_desc);
     //registerTransFunction(trans_6167_id, trans_6167_id_desc);
     
