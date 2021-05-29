@@ -31,14 +31,19 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
  * assign to it 8 for 32x32 and 4 for 64x64 tiles.
  * 
  * The code for 61x67 does not delay transposing the diagonals. This is because
- * the tileLength of 17 gives the best miss rate. Saving the 17 diag elems of
- * the tile in local vars[or array] will exceed the max of 12 allowed local vars. 
+ * the tileLength of 17 gives the best miss rate of 1952. Saving the 17 diag elems of
+ * the tile in local vars[or array] will exceed the max of 12 allowed local vars.
+ *
+ * For 61x67 using tile length of 17 => tile contains 17^2 = 289 ints, but cache
+ * can only hold 32*8 = 356 ints. ./driver.py accepted the answer. Tile length of
+ * 16 [16^2 = 256] will have a miss rate of 1994.
  */ 
     int ii, jj, i, j;
     
-    // 32 x 32 matrix. Blocksize 8 gives the best miss rate.
+    // 32 x 32 matrix. Tile length of 8 gives the best miss rate.
     if (M == 32) {
         int diag[8]; // For diag vals of tile.
+        
         // Traverse 8x8 tiles horizontally.
         for(ii = 0; ii < N; ii += 8) {
             for(jj = 0; jj < M; jj += 8){
@@ -63,7 +68,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
         }
     }
 
-    // 64 x 64 matrix. Blocksize 4 gives the best miss rate.
+    // 64 x 64 matrix. Tile length of 4 gives the best miss rate.
     else if (M == 64) {
         int diag[4];
         
@@ -91,9 +96,9 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
         }
     }
     
-    else { // 61 x 67 matrix. Blocksize 17 gives the best miss rate.
+    else { // 61 x 67 matrix. Tile length 17 gives the best miss rate.
         
-        // Traverse 4x4 tiles horizontally.
+        // Traverse 17 tiles horizontally.
         for(ii = 0; ii < N; ii += 17) {
             for(jj = 0; jj < M; jj += 17){
                 
