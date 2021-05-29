@@ -23,13 +23,17 @@ int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
 
+    /* Note: Using tilelength local var makes the code neater. Without this var
+     * there will a lot of duplicate code written in different conditionals for
+     * 32x32 and 61x67 matrices.
+     * With this var the no of local vars is 13, 1 over the max allowed.
+     */ 
     int tileLength; // Divide matrix into square tiles with length tileLength.
     int ii;         // Traverse matrices' A & B's tiles row-wise.
     int jj;         // Traverse matrices' A & B's tiles column-wise.
     int i;          // Traverse each tile's rows.
     int j;          // Traverse each tile's columns.
-    int diag;       // Save the diag value of matrix. Avoids cache conflict.
-    int ind;        // Save the index of diag value.
+    int t0, t1, t2, t3, t4, t5, t6, t7; // For local storage.
     
     // The same blocking strategy works for both 32x32 and 61x67 matrices.
     if (M == 32 || M == 61) {
@@ -48,8 +52,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
                     
                         // Save diagonals.
                         if (i == j) {
-                            diag = A[i][i];
-                            ind = i;
+                            t0 = A[i][i];
+                            t1 = i;
                         }
                     
                         // Copy all non-diagonal Aij to Bji.
@@ -57,7 +61,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
                     }
 
                     // Copy diag only after the whole row is copied.
-                    if (ii == jj){B[ind][ind] = diag;}
+                    if (ii == jj){B[t1][t1] = t0;}
                 }
                 // Move onto next tile.
             }
@@ -66,7 +70,6 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     
     // 64x64. Use 4x4 tiles inside of 8x8 tiles. 
     else {
-        int t0, t1, t2, t3, t4, t5, t6, t7;
 
         tileLength = 8;
         // Traverse outer tiles horizontally.
