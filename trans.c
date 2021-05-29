@@ -23,27 +23,13 @@ int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
 
-/* Assignment says can't use arrays. So can swap for 8 local vars if necessary.
- * 
- * Code be tidied up for M = 32 and 64. There is alot of duplicate code, getting 
- * rid of which will require the use of a local var to hold tileLength and
- * assign to it 8 for 32x32 and 4 for 64x64 tiles.
- * 
- * The code for 61x67 does not delay transposing the diagonals. This is because
- * the tileLength of 17 gives the best miss rate of 1952. Saving the 17 diag elems of
- * the tile in local vars[or array] will exceed the max of 12 allowed local vars.
- *
- * For 61x67 using tile length of 17 => tile contains 17^2 = 289 ints, but cache
- * can only hold 32*8 = 356 ints. ./driver.py accepted the answer. Tile length of
- * 16 [16^2 = 256] will have a miss rate of 1994.
- */
     int tileLength; // Divide matrix into square tiles with length tileLength.
     int ii;         // Traverse matrices' A & B's tiles row-wise.
     int jj;         // Traverse matrices' A & B's tiles column-wise.
     int i;          // Traverse each tile's rows.
     int j;          // Traverse each tile's columns.
-    int diag;       // Save the diag value of matrix.
-    int ind;         // Save the index of diag value.
+    int diag;       // Save the diag value of matrix. Avoids cache conflict.
+    int ind;        // Save the index of diag value.
     
     // The same blocking strategy works for both 32x32 and 61x67 matrices.
     if (M == 32 || M == 61) {
@@ -78,34 +64,89 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
         }
     }
     
-    // 64x64 matrix. Tile length of 4 gives the best miss rate.
-    else if (M == 64) {
-        int diag[4];
-        
-        // Traverse 4x4 tiles horizontally.
-        for(ii = 0; ii < N; ii += 4) {
-            for(jj = 0; jj < M; jj += 4){
-            
-            // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 4; i++) {
-                for(j = jj; j < jj + 4; j++){
-                    if (i == j) {
-                        diag[i%4] = A[i][i];
-                    }
-                    else {B[j][i] = A[i][j];}
+    // 64x64. Use 4x4 tiles inside of 8x8 tiles. 
+    else {
+        int t0, t1, t2, t3, t4, t5, t6, t7;
+
+        tileLength = 8;
+        // Traverse outer tiles horizontally.
+        for(ii = 0; ii < N; ii += tileLength) {
+            for(jj = 0; jj < M; jj += tileLength){
+                
+                // Traverse each 8x8 tile in 4 tiles of 4x4.
+                for(i = ii; i < ii + 4; i++) {
+                    
+                    // Store row of tile in local vars.
+                    t0 = A[i][jj];
+                    t1 = A[i][jj+1];
+                    t2 = A[i][jj+2];
+                    t3 = A[i][jj+3];
+                    t4 = A[i][jj+4];
+                    t5 = A[i][jj+5];
+                    t6 = A[i][jj+6];
+                    t7 = A[i][jj+7];
+
+                    // Top left mini tile of B gets its values.
+                    B[jj][i] = t0;
+                    B[jj+1][i] = t1;
+                    B[jj+2][i] = t2;
+                    B[jj+3][i] = t3;
+                    
+                    /* Top right mini tile of B is used as temp storage.
+                     * At the end of the for loop, this tile will hold the 
+                     * transpose of top left mini tile of A.This tile's 
+                     * contents identically match what needs to 
+                     * go in the bottom left mini tile of B.
+                     */  
+                    B[jj][i+4] = t4;
+                    B[jj+1][i+4] = t5;
+                    B[jj+2][i+4] = t6;
+                    B[jj+3][i+4] = t7;
+                }
+                
+                // Update bottom left and bottom right mini tiles.
+                for (i = jj; i < jj + 4; i++) {
+
+                    /* Prepare columns of bottom left tile of A for transfer to
+                     * top right tile of B.
+                     */ 
+                    t4 = A[ii+4][i];
+                    t5 = A[ii+5][i];
+                    t6 = A[ii+6][i];
+                    t7 = A[ii+7][i];
+
+                    /* Prepare the transfer from B's top right to its bottom
+                     * left tile.
+                     */
+                    t0 = B[i][ii+4];
+                    t1 = B[i][ii+5];
+                    t2 = B[i][ii+6];
+                    t3 = B[i][ii+7];
+
+                    // B's top right tile's row i is free to take its values.
+                    B[i][ii+4] = t4;
+                    B[i][ii+5] = t5;
+                    B[i][ii+6] = t6;
+                    B[i][ii+7] = t7;
+
+                    // Transfer into B's bottom left tile.
+                    B[i+4][ii] = t0;
+                    B[i+4][ii+1] = t1;
+                    B[i+4][ii+2] = t2;
+                    B[i+4][ii+3] = t3;
+
+                    // Bottom right tiles of A and B.
+                    B[i+4][ii+4] = A[ii+4][i+4];
+                    B[i+4][ii+5] = A[ii+5][i+4];
+                    B[i+4][ii+6] = A[ii+6][i+4];
+                    B[i+4][ii+7] = A[ii+7][i+4];
+
                 }
             }
-           // For i == j, transfer all Aii to Bii.
-           if (ii == jj) {
-              for (i = ii; i < ii + 4; i++) {
-                 B[i][i] = diag[i%4];
-              }
-           }
-          // Move onto next tile. 
-          }
         }
-    }
+    }           
 }
+
 
 
 /* 
@@ -317,9 +358,9 @@ void registerFunctions()
     registerTransFunction(transpose_submit, transpose_submit_desc); 
 
     /* Register any additional transpose functions */
-    registerTransFunction(trans_32_diag, trans_32_diag_desc);
+    //registerTransFunction(trans_32_diag, trans_32_diag_desc);
     //registerTransFunction(trans_6464_dd, trans_6464_dd_desc);
-    registerTransFunction(trans_6167_id, trans_6167_id_desc);
+    //registerTransFunction(trans_6167_id, trans_6167_id_desc);
     
 }
 
