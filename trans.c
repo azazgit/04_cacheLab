@@ -9,7 +9,6 @@
  */ 
 #include <stdio.h>
 #include "cachelab.h"
-#define tileLength 8 // Used to find the best miss rate. Not used in submit func.
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
@@ -37,38 +36,49 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
  * For 61x67 using tile length of 17 => tile contains 17^2 = 289 ints, but cache
  * can only hold 32*8 = 356 ints. ./driver.py accepted the answer. Tile length of
  * 16 [16^2 = 256] will have a miss rate of 1994.
- */ 
-    int ii, jj, i, j;
+ */
+    int tileLength; // Divide matrix into square tiles with length tileLength.
+    int ii;         // Traverse matrices' A & B's tiles row-wise.
+    int jj;         // Traverse matrices' A & B's tiles column-wise.
+    int i;          // Traverse each tile's rows.
+    int j;          // Traverse each tile's columns.
+    int diag;       // Save the diag value of matrix.
+    int ind;         // Save the index of diag value.
     
-    // 32 x 32 matrix. Tile length of 8 gives the best miss rate.
-    if (M == 32) {
-        int diag[8]; // For diag vals of tile.
+    // The same blocking strategy works for both 32x32 and 61x67 matrices.
+    if (M == 32 || M == 61) {
         
-        // Traverse 8x8 tiles horizontally.
-        for(ii = 0; ii < N; ii += 8) {
-            for(jj = 0; jj < M; jj += 8){
+        // For 32x32 tile length of 8 gives the best miss rate.
+        if (M == 32) {tileLength = 8;}
+        else {tileLength = 17;} // For 61x67 17 gives the best miss rate.
+
+        // Traverse matrices by tiles row-wise.
+        for(ii = 0; ii < N; ii += tileLength) {
+            for(jj = 0; jj < M; jj += tileLength){
             
-                // For i != j, transfer all Aij to Bji.
-                for(i = ii; i < ii + 8; i++) {
-                    for(j = jj; j < jj + 8; j++){
+                // Traverse each tile row-wise.
+                for(i = ii; i < min(N, ii + tileLength); i++) {
+                    for(j = jj; j < min(M, jj + tileLength); j++){
+                    
+                        // Save diagonals.
                         if (i == j) {
-                            diag[i%8] = A[i][i];
+                            diag = A[i][i];
+                            ind = i;
                         }
+                    
+                        // Copy all non-diagonal Aij to Bji.
                         else {B[j][i] = A[i][j];}
                     }
+
+                    // Copy diag only after the whole row is copied.
+                    if (ii == jj){B[ind][ind] = diag;}
                 }
-                // For i == j, transfer all Aii to Bii.
-                if (ii == jj) {
-                    for (i = ii; i < ii + 8; i++) {
-                        B[i][i] = diag[i%8];
-                    }
-                }
-                // Move onto next tile. 
+                // Move onto next tile.
             }
         }
     }
-
-    // 64 x 64 matrix. Tile length of 4 gives the best miss rate.
+    
+    // 64x64 matrix. Tile length of 4 gives the best miss rate.
     else if (M == 64) {
         int diag[4];
         
@@ -95,24 +105,8 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
           }
         }
     }
-    
-    else { // 61 x 67 matrix. Tile length 17 gives the best miss rate.
-        
-        // Traverse 17 tiles horizontally.
-        for(ii = 0; ii < N; ii += 17) {
-            for(jj = 0; jj < M; jj += 17){
-                
-                // For i != j, transfer all Aij to Bji.
-                for(i = ii; i < min(N, ii + 17); i++) {
-                    for(j = jj; j < min(M, jj + 17); j++){
-                        B[j][i] = A[i][j];
-                    }
-                }
-                // Move onto next tile. 
-            }
-        }
-    }
 }
+
 
 /* 
  * You can define additional transpose functions below. We've defined
@@ -138,7 +132,7 @@ void trans_00(int M, int N, int A[N][M], int B[M][N]) {
 
 char trans_3232_id_desc[] = "3232. Inline diag. 343 misses with tilelength 8.";
 void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
-    
+    int tileLength = 8;
     int ii, jj, i, j;
 
     // Traverse 8x8 tiles horizontally.
@@ -160,6 +154,7 @@ void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
 char trans_3232_dd_desc[] = "3232. Delay diag. 289 misses with tilelength 8.";
 void trans_3232_dd(int M, int N, int A[N][M], int B[M][N]) {
     
+    int tileLength = 8;
     int ii, jj, i, j;
 
     int diag[tileLength];
@@ -188,10 +183,36 @@ void trans_3232_dd(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
+char trans_32_diag_desc[] = "32. Copy diag after each most inner iteration. 287 misses.";
+void trans_32_diag(int M, int N, int A[N][M], int B[M][N]) {
+
+    int tileLength = 8;
+    int ii, jj, i, j, temp, d;
+
+    // Traverse 8x8 tiles horizontally.
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
+            
+            // For i != j, transfer all Aij to Bji.
+            for(i = ii; i < min(N, ii + tileLength); i++) {
+                for(j = jj; j < min(M, jj + tileLength); j++){
+                    if (i == j) {
+                        temp = A[i][i];
+                        d = i;
+                    }
+                    else {B[j][i] = A[i][j];}
+                }
+                if (ii == jj){B[d][d] = temp;}
+            }
+          // Move onto next tile. 
+        }
+    }
+}
 
 char trans_6464_id_desc[] = "6464. Inline diag. Misses 1891.";
 void trans_6464_id(int M, int N, int A[N][M], int B[M][N]) {
     
+    int tileLength = 4;
     int ii, jj, i, j;
 
     // Traverse 4x4 tiles horizontally.
@@ -213,6 +234,7 @@ void trans_6464_id(int M, int N, int A[N][M], int B[M][N]) {
 char trans_6464_dd_desc[] = "6464. Delay diag. Misses 1797.";
 void trans_6464_dd(int M, int N, int A[N][M], int B[M][N]) {
     
+    int tileLength = 4;
     int ii, jj, i, j;
 
     int diag[tileLength];
@@ -245,6 +267,7 @@ void trans_6464_dd(int M, int N, int A[N][M], int B[M][N]) {
 char trans_6167_id_desc[] = "6167. Inline diag. 1950 misses with tilelength 17.";
 void trans_6167_id(int M, int N, int A[N][M], int B[M][N]) {
     
+    int tileLength = 17;
     int ii, jj, i, j;
 
     // Traverse 4x4 tiles horizontally.
@@ -294,9 +317,9 @@ void registerFunctions()
     registerTransFunction(transpose_submit, transpose_submit_desc); 
 
     /* Register any additional transpose functions */
-    //registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
+    registerTransFunction(trans_32_diag, trans_32_diag_desc);
     //registerTransFunction(trans_6464_dd, trans_6464_dd_desc);
-    //registerTransFunction(trans_6167_id, trans_6167_id_desc);
+    registerTransFunction(trans_6167_id, trans_6167_id_desc);
     
 }
 
@@ -323,7 +346,7 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N])
 
 /* The below functions tried to implement with success the following algo:
  * https://www.youtube.com/watch?v=v9Y2uiThKBY&t=563s
- */
+ 
 char trans_algo_desc[] = "Youtube algo";
 void trans_algo(int M, int N, int A[N][M], int B[M][N])
 {
@@ -458,3 +481,4 @@ void trans_algo64(int M, int N, int A[N][M], int B[M][N]) {
        }
     }
 }
+*/
