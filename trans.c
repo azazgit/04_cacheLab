@@ -9,6 +9,7 @@
  */ 
 #include <stdio.h>
 #include "cachelab.h"
+# define tileLength 4
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
@@ -23,10 +24,10 @@ char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
-    for(ii = 0; ii < N; ii += 8) {
-        for(jj = 0; jj < M; jj += 8){
-            for(i = ii; i < ii + 8; i++) {
-                for(j = jj; j < jj + 8; j++){
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
+            for(i = ii; i < ii + tileLength; i++) {
+                for(j = jj; j < jj + tileLength; j++){
                     if(ii + i == jj + j) {continue;} // ignore diagonals.
                     B[j][i] = A[i][j];
                 }
@@ -56,10 +57,10 @@ char trans_00_desc[] = "Transpose 00";
 void trans_00(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
-    for(ii = 0; ii < N; ii += 8) {
-        for(jj = 0; jj < M; jj += 8){
-            for(i = ii; i < ii + 8; i++) {
-                for(j = jj; j < jj + 8; j++){
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
+            for(i = ii; i < ii + tileLength; i++) {
+                for(j = jj; j < jj + tileLength; j++){
                     B[j][i] = A[i][j];
                 }
             }
@@ -74,12 +75,12 @@ void trans_32x32_8x8_id(int M, int N, int A[N][M], int B[M][N]) {
     int ii, jj, i, j;
 
     // Traverse 8x8 tiles horizontally.
-    for(ii = 0; ii < N; ii += 8) {
-        for(jj = 0; jj < M; jj += 8){
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 8; i++) {
-                for(j = jj; j < jj + 8; j++){
+            for(i = ii; i < ii + tileLength; i++) {
+                for(j = jj; j < jj + tileLength; j++){
                     B[j][i] = A[i][j];
                 }
             }
@@ -93,25 +94,25 @@ void trans_32x32_8x8_dd(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
-    int diag[8];
+    int diag[tileLength];
 
     // Traverse 8x8 tiles horizontally.
-    for(ii = 0; ii < N; ii += 8) {
-        for(jj = 0; jj < M; jj += 8){
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 8; i++) {
-                for(j = jj; j < jj + 8; j++){
+            for(i = ii; i < ii + tileLength; i++) {
+                for(j = jj; j < jj + tileLength; j++){
                     if (i == j) {
-                        diag[i%8] = A[i][i];
+                        diag[i%tileLength] = A[i][i];
                     }
                     else {B[j][i] = A[i][j];}
                 }
             }
            // For i == j, transfer all Aii to Bii.
            if (ii == jj) {
-              for (i = ii; i < ii + 8; i++) {
-                 B[i][i] = diag[i%8];
+              for (i = ii; i < ii + tileLength; i++) {
+                 B[i][i] = diag[i%tileLength];
               }
            }
           // Move onto next tile. 
@@ -127,12 +128,12 @@ void trans_64x64_4x4_id(int M, int N, int A[N][M], int B[M][N]) {
     int ii, jj, i, j;
 
     // Traverse 4x4 tiles horizontally.
-    for(ii = 0; ii < N; ii += 4) {
-        for(jj = 0; jj < M; jj += 4){
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 4; i++) {
-                for(j = jj; j < jj + 4; j++){
+            for(i = ii; i < ii + tileLength; i++) {
+                for(j = jj; j < jj + tileLength; j++){
                     B[j][i] = A[i][j];
                 }
            }
@@ -145,25 +146,25 @@ void trans_64x64_4x4_dd(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
-    int diag[4];
+    int diag[tileLength];
 
     // Traverse 4x4 tiles horizontally.
-    for(ii = 0; ii < N; ii += 4) {
-        for(jj = 0; jj < M; jj += 4){
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + 4; i++) {
-                for(j = jj; j < jj + 4; j++){
+            for(i = ii; i < ii + tileLength; i++) {
+                for(j = jj; j < jj + tileLength; j++){
                     if (i == j) {
-                        diag[i%4] = A[i][i];
+                        diag[i%tileLength] = A[i][i];
                     }
                     else {B[j][i] = A[i][j];}
                 }
             }
            // For i == j, transfer all Aii to Bii.
            if (ii == jj) {
-              for (i = ii; i < ii + 4; i++) {
-                 B[i][i] = diag[i%4];
+              for (i = ii; i < ii + tileLength; i++) {
+                 B[i][i] = diag[i%tileLength];
               }
            }
           // Move onto next tile. 
@@ -238,11 +239,11 @@ void trans_algo(int M, int N, int A[N][M], int B[M][N])
     int ii, jj, i, j;
 
     // Read Tiles into cache.
-    for (ii = 0; ii < 32; ii += 8) {
-        for (jj = 0; jj <= ii; jj += 8) {
+    for (ii = 0; ii < 32; ii += tileLength) {
+        for (jj = 0; jj <= ii; jj += tileLength) {
             
             // Traverse tile row wise.        
-            for (i = ii; i < ii + 8; i++) {
+            for (i = ii; i < ii + tileLength; i++) {
                 for (j = jj; j <= jj + i; j++) {
                     
                     // Transfer Aij to Bji.
@@ -260,17 +261,17 @@ char trans_algo2_desc[] = "Youtube algo 2";
 void trans_algo2(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
-    int diag[8];
+    int diag[tileLength];
     
-    for (ii = 0; ii < 32; ii += 8) {
-       for (jj = 0; jj <= ii; jj += 8) {
+    for (ii = 0; ii < 32; ii += tileLength) {
+       for (jj = 0; jj <= ii; jj += tileLength) {
 
           // Diagonal tiles.
           if (ii == jj) {
-             for (i = ii; i < ii + 8; i++) {
-                for (j = jj; j <= jj + i%8; j++) {
+             for (i = ii; i < ii + tileLength; i++) {
+                for (j = jj; j <= jj + i%tileLength; j++) {
                    if (i == j) {
-                      diag[i%8] = A[i][i];
+                      diag[i%tileLength] = A[i][i];
                    }
                    else {
                        B[j][i] = A[i][j];
@@ -279,8 +280,8 @@ void trans_algo2(int M, int N, int A[N][M], int B[M][N]) {
              }
 
              // Aji -> Bij.
-             for (i = ii; i < ii + 8; i++) {
-                 for (j = jj; j < jj + i%8; j++) {
+             for (i = ii; i < ii + tileLength; i++) {
+                 for (j = jj; j < jj + i%tileLength; j++) {
                      B[i][j] = A[j][i];
                  }
              }
@@ -289,22 +290,22 @@ void trans_algo2(int M, int N, int A[N][M], int B[M][N]) {
           // Non-diagonal tiles.
           else {
               // Aij -> Bji.
-              for (i = ii; i < ii + 8; i++) {
-                  for (j = jj; j < jj + 8; j++) {
+              for (i = ii; i < ii + tileLength; i++) {
+                  for (j = jj; j < jj + tileLength; j++) {
                       B[j][i] = A[i][j];
                   }
               }
               // Aji -> Bij.
-              for (i = ii; i < ii + 8; i++) {
-                  for (j = jj; j < jj + 8; j++) {
+              for (i = ii; i < ii + tileLength; i++) {
+                  for (j = jj; j < jj + tileLength; j++) {
                       B[i][j] = A[j][i];
                   }
               }
           }
           // Tile finished. Copy diag elems.
           if (ii == jj) {
-              for (i = ii;i < ii + 8; i++) {
-                  B[i][i] = diag[i%8];
+              for (i = ii;i < ii + tileLength; i++) {
+                  B[i][i] = diag[i%tileLength];
               }
           }
        }
@@ -316,17 +317,17 @@ char trans_algo64_desc[] = "Youtube algo 64";
 void trans_algo64(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
-    int diag[4];
+    int diag[tileLength];
     
-    for (ii = 0; ii < 64; ii += 4) {
-       for (jj = 0; jj <= ii; jj += 4) {
+    for (ii = 0; ii < 64; ii += tileLength) {
+       for (jj = 0; jj <= ii; jj += tileLength) {
 
           // Diagonal tiles.
           if (ii == jj) {
-             for (i = ii; i < ii + 4; i++) {
-                for (j = jj; j <= jj + i%4; j++) {
+             for (i = ii; i < ii + tileLength; i++) {
+                for (j = jj; j <= jj + i%tileLength; j++) {
                    if (i == j) {
-                      diag[i%4] = A[i][i];
+                      diag[i%tileLength] = A[i][i];
                    }
                    else {
                        B[j][i] = A[i][j];
@@ -335,8 +336,8 @@ void trans_algo64(int M, int N, int A[N][M], int B[M][N]) {
              }
 
              // Aji -> Bij.
-             for (i = ii; i < ii + 4; i++) {
-                 for (j = jj; j < jj + i%4; j++) {
+             for (i = ii; i < ii + tileLength; i++) {
+                 for (j = jj; j < jj + i%tileLength; j++) {
                      B[i][j] = A[j][i];
                  }
              }
@@ -345,22 +346,22 @@ void trans_algo64(int M, int N, int A[N][M], int B[M][N]) {
           // Non-diagonal tiles.
           else {
               // Aij -> Bji.
-              for (i = ii; i < ii + 4; i++) {
-                  for (j = jj; j < jj + 4; j++) {
+              for (i = ii; i < ii + tileLength; i++) {
+                  for (j = jj; j < jj + tileLength; j++) {
                       B[j][i] = A[i][j];
                   }
               }
               // Aji -> Bij.
-              for (i = ii; i < ii + 4; i++) {
-                  for (j = jj; j < jj + 4; j++) {
+              for (i = ii; i < ii + tileLength; i++) {
+                  for (j = jj; j < jj + tileLength; j++) {
                       B[i][j] = A[j][i];
                   }
               }
           }
           // Tile finished. Copy diag elems.
           if (ii == jj) {
-              for (i = ii;i < ii + 4; i++) {
-                  B[i][i] = diag[i%4];
+              for (i = ii;i < ii + tileLength; i++) {
+                  B[i][i] = diag[i%tileLength];
               }
           }
        }
