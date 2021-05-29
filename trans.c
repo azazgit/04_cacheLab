@@ -120,8 +120,28 @@ void trans_32x32_8x8_dd(int M, int N, int A[N][M], int B[M][N]) {
 }
 
 
-char trans_64x64_4x4_desc[] = "64x64. 4x4. Delay diag. ";
-void trans_64x64_4x4(int M, int N, int A[N][M], int B[M][N]) {
+
+char trans_64x64_4x4_id_desc[] = "64x64. 4x4. Inline diag. Misses 1891.";
+void trans_64x64_4x4_id(int M, int N, int A[N][M], int B[M][N]) {
+    
+    int ii, jj, i, j;
+
+    // Traverse 4x4 tiles horizontally.
+    for(ii = 0; ii < N; ii += 4) {
+        for(jj = 0; jj < M; jj += 4){
+            
+            // For i != j, transfer all Aij to Bji.
+            for(i = ii; i < ii + 4; i++) {
+                for(j = jj; j < jj + 4; j++){
+                    B[j][i] = A[i][j];
+                }
+           }
+          // Move onto next tile. 
+        }
+    }
+}
+char trans_64x64_4x4_dd_desc[] = "64x64. 4x4. Delay diag. Misses 1797.";
+void trans_64x64_4x4_dd(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
@@ -186,9 +206,10 @@ void registerFunctions()
     /* Register any additional transpose functions */
     
     //registerTransFunction(trans_00, trans_00_desc);
-    registerTransFunction(trans_32x32_8x8_id, trans_32x32_8x8_id_desc);
-    registerTransFunction(trans_32x32_8x8_dd, trans_32x32_8x8_dd_desc);
-    //registerTransFunction(trans_64x64_4x4, trans_64x64_4x4_desc);
+    //registerTransFunction(trans_32x32_8x8_id, trans_32x32_8x8_id_desc);
+    //registerTransFunction(trans_32x32_8x8_dd, trans_32x32_8x8_dd_desc);
+    registerTransFunction(trans_64x64_4x4_id, trans_64x64_4x4_id_desc);
+    registerTransFunction(trans_64x64_4x4_dd, trans_64x64_4x4_dd_desc);
     
 }
 
