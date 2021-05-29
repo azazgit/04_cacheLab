@@ -55,7 +55,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     }
 
     // 64 x 64 matrix. Blocksize 4 gives the best miss rate.
-    if (M == 64) {
+    else if (M == 64) {
         int diag[4];
         
         // Traverse 4x4 tiles horizontally.
@@ -81,9 +81,23 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
           }
         }
     }
-
-
-
+    
+    else { // 61 x 67 matrix. Blocksize 17 gives the best miss rate.
+        
+        // Traverse 4x4 tiles horizontally.
+        for(ii = 0; ii < N; ii += 17) {
+            for(jj = 0; jj < M; jj += 17){
+                
+                // For i != j, transfer all Aij to Bji.
+                for(i = ii; i < min(N, ii + 17); i++) {
+                    for(j = jj; j < min(M, jj + 17); j++){
+                        B[j][i] = A[i][j];
+                    }
+                }
+                // Move onto next tile. 
+            }
+        }
+    }
 }
 
 /* 
@@ -263,8 +277,8 @@ void registerFunctions()
     registerTransFunction(transpose_submit, transpose_submit_desc); 
 
     /* Register any additional transpose functions */
-    registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
-    registerTransFunction(trans_6464_dd, trans_6464_dd_desc);
+    //registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
+    //registerTransFunction(trans_6464_dd, trans_6464_dd_desc);
     //registerTransFunction(trans_6167_id, trans_6167_id_desc);
     
 }
