@@ -9,7 +9,6 @@
  */ 
 #include <stdio.h>
 #include "cachelab.h"
-# define tileLength 4
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
@@ -23,35 +22,12 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N]) {
     
-    int ii, jj, i, j;
-    for(ii = 0; ii < N; ii += tileLength) {
-        for(jj = 0; jj < M; jj += tileLength){
-            for(i = ii; i < ii + tileLength; i++) {
-                for(j = jj; j < jj + tileLength; j++){
-                    if(ii + i == jj + j) {continue;} // ignore diagonals.
-                    B[j][i] = A[i][j];
-                }
-            }
-        }
-    }
-
-    // Add diagonals.
-    for (i = 0; i < N; i++) {
-        for (j = 0; j < M; j++) {
-            if (i == j) {
-                B[j][i] = A[i][j];
-            }
-        }
-    }
-    if (is_transpose(M, N, A, B)) {
-        printf("transposed correctly.");
-    }
 }
 
 /* 
  * You can define additional transpose functions below. We've defined
  * a simple one below to help you get started. 
- */ 
+ * 
 
 char trans_00_desc[] = "Transpose 00";
 void trans_00(int M, int N, int A[N][M], int B[M][N]) {
@@ -66,11 +42,12 @@ void trans_00(int M, int N, int A[N][M], int B[M][N]) {
             }
         }
     }
-}
+}*/
 
+# define tileLength 8
 
-char trans_32x32_8x8_id_desc[] = "32x32 8x8. Inline diag. Misses 343";
-void trans_32x32_8x8_id(int M, int N, int A[N][M], int B[M][N]) {
+char trans_3232_id_desc[] = "32x32. Inline diag. Misses 343";
+void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
@@ -89,8 +66,8 @@ void trans_32x32_8x8_id(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
-char trans_32x32_8x8_dd_desc[] = "32x32 8x8. Delay diag. Misses 289";
-void trans_32x32_8x8_dd(int M, int N, int A[N][M], int B[M][N]) {
+char trans_3232_dd_desc[] = "32x32. Delay diag. Misses 289";
+void trans_3232_dd(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
@@ -172,6 +149,27 @@ void trans_64x64_4x4_dd(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
+int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
+
+char trans_6167_id_desc[] = "6167. Inline diag. 1950 misses with tilelength 17.";
+void trans_6167_id(int M, int N, int A[N][M], int B[M][N]) {
+    
+    int ii, jj, i, j;
+
+    // Traverse 4x4 tiles horizontally.
+    for(ii = 0; ii < N; ii += tileLength) {
+        for(jj = 0; jj < M; jj += tileLength){
+            
+            // For i != j, transfer all Aij to Bji.
+            for(i = ii; i < min(N, ii + tileLength); i++) {
+                for(j = jj; j < min(M, jj + tileLength); j++){
+                    B[j][i] = A[i][j];
+                }
+           }
+          // Move onto next tile. 
+        }
+    }
+}
 
 /* 
  * trans - A simple baseline transpose function, not optimized for the cache.
@@ -207,10 +205,11 @@ void registerFunctions()
     /* Register any additional transpose functions */
     
     //registerTransFunction(trans_00, trans_00_desc);
-    //registerTransFunction(trans_32x32_8x8_id, trans_32x32_8x8_id_desc);
-    //registerTransFunction(trans_32x32_8x8_dd, trans_32x32_8x8_dd_desc);
-    registerTransFunction(trans_64x64_4x4_id, trans_64x64_4x4_id_desc);
-    registerTransFunction(trans_64x64_4x4_dd, trans_64x64_4x4_dd_desc);
+    registerTransFunction(trans_3232_id, trans_3232_id_desc);
+    registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
+    //registerTransFunction(trans_64x64_4x4_id, trans_64x64_4x4_id_desc);
+    //registerTransFunction(trans_64x64_4x4_dd, trans_64x64_4x4_dd_desc);
+    //registerTransFunction(trans_6167_id, trans_6167_id_desc);
     
 }
 
@@ -305,7 +304,7 @@ void trans_algo2(int M, int N, int A[N][M], int B[M][N]) {
           // Tile finished. Copy diag elems.
           if (ii == jj) {
               for (i = ii;i < ii + tileLength; i++) {
-                  B[i][i] = diag[i%tileLength];
+                  B[i][i] = diag[i%8];
               }
           }
        }
