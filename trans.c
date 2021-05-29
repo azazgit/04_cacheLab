@@ -99,6 +99,36 @@ void trans_01(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
+char trans_16_desc[] = "Transpose 16 at a time.";
+void trans_16(int M, int N, int A[N][M], int B[M][N]) {
+    
+    int ii, jj, i, j;
+
+    int diag[16];
+
+    // Traverse 8x8 tiles horizontally.
+    for(ii = 0; ii < N; ii += 16) {
+        for(jj = 0; jj < M; jj += 16){
+            
+            // For i != j, transfer all Aij to Bji.
+            for(i = ii; i < ii + 16; i++) {
+                for(j = jj; j < jj + 16; j++){
+                    if (i == j) {
+                        diag[i%16] = A[i][i];
+                    }
+                    else {B[j][i] = A[i][j];}
+                }
+            }
+           // For i == j, transfer all Aii to Bii.
+           if (ii == jj) {
+              for (i = ii; i < ii + 16; i++) {
+                 B[i][i] = diag[i%16];
+              }
+           }
+          // Move onto next tile. 
+        }
+    }
+}
 
 char trans_64x64_4x4_desc[] = "64x64. 4x4. Delay diag. ";
 void trans_64x64_4x4(int M, int N, int A[N][M], int B[M][N]) {
@@ -212,6 +242,60 @@ void trans_algo2(int M, int N, int A[N][M], int B[M][N]) {
 }
 
 
+char trans_algo64_desc[] = "Youtube algo 64";
+void trans_algo64(int M, int N, int A[N][M], int B[M][N]) {
+    
+    int ii, jj, i, j;
+    int diag[4];
+    
+    for (ii = 0; ii < 64; ii += 4) {
+       for (jj = 0; jj <= ii; jj += 4) {
+
+          // Diagonal tiles.
+          if (ii == jj) {
+             for (i = ii; i < ii + 4; i++) {
+                for (j = jj; j <= jj + i%4; j++) {
+                   if (i == j) {
+                      diag[i%4] = A[i][i];
+                   }
+                   else {
+                       B[j][i] = A[i][j];
+                   }
+                }
+             }
+
+             // Aji -> Bij.
+             for (i = ii; i < ii + 4; i++) {
+                 for (j = jj; j < jj + i%4; j++) {
+                     B[i][j] = A[j][i];
+                 }
+             }
+          }
+
+          // Non-diagonal tiles.
+          else {
+              // Aij -> Bji.
+              for (i = ii; i < ii + 4; i++) {
+                  for (j = jj; j < jj + 4; j++) {
+                      B[j][i] = A[i][j];
+                  }
+              }
+              // Aji -> Bij.
+              for (i = ii; i < ii + 4; i++) {
+                  for (j = jj; j < jj + 4; j++) {
+                      B[i][j] = A[j][i];
+                  }
+              }
+          }
+          // Tile finished. Copy diag elems.
+          if (ii == jj) {
+              for (i = ii;i < ii + 4; i++) {
+                  B[i][i] = diag[i%4];
+              }
+          }
+       }
+    }
+}
 /* 
  * trans - A simple baseline transpose function, not optimized for the cache.
  */
@@ -247,9 +331,11 @@ void registerFunctions()
     //registerTransFunction(trans, trans_desc); 
     
     //registerTransFunction(trans_00, trans_00_desc);
-    //registerTransFunction(trans_01, trans_01_desc);
+    registerTransFunction(trans_01, trans_01_desc);
+    registerTransFunction(trans_16, trans_16_desc);
     //registerTransFunction(trans_64x64_4x4, trans_64x64_4x4_desc);
-    registerTransFunction(trans_algo2, trans_algo2_desc);
+    //registerTransFunction(trans_algo2, trans_algo2_desc);
+    //registerTransFunction(trans_algo64, trans_algo64_desc);
     
 }
 
