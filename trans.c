@@ -11,6 +11,7 @@
 #include "cachelab.h"
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
+int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
 
 /* 
  * transpose_submit - This is the solution transpose function that you
@@ -44,9 +45,9 @@ void trans_00(int M, int N, int A[N][M], int B[M][N]) {
     }
 }*/
 
-# define tileLength 8
+# define tileLength 5 
 
-char trans_3232_id_desc[] = "32x32. Inline diag. Misses 343";
+char trans_3232_id_desc[] = "3232. Inline diag. 343 misses with tilelength 8.";
 void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
@@ -56,8 +57,8 @@ void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
         for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + tileLength; i++) {
-                for(j = jj; j < jj + tileLength; j++){
+            for(i = ii; i < min(N, ii + tileLength); i++) {
+                for(j = jj; j < min(M, jj + tileLength); j++){
                     B[j][i] = A[i][j];
                 }
             }
@@ -66,7 +67,7 @@ void trans_3232_id(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
-char trans_3232_dd_desc[] = "32x32. Delay diag. Misses 289";
+char trans_3232_dd_desc[] = "3232. Delay diag. 289 misses with tilelength 8.";
 void trans_3232_dd(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
@@ -78,8 +79,8 @@ void trans_3232_dd(int M, int N, int A[N][M], int B[M][N]) {
         for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + tileLength; i++) {
-                for(j = jj; j < jj + tileLength; j++){
+            for(i = ii; i < min(N, ii + tileLength); i++) {
+                for(j = jj; j < min(M, jj + tileLength); j++){
                     if (i == j) {
                         diag[i%tileLength] = A[i][i];
                     }
@@ -99,8 +100,8 @@ void trans_3232_dd(int M, int N, int A[N][M], int B[M][N]) {
 
 
 
-char trans_64x64_4x4_id_desc[] = "64x64. 4x4. Inline diag. Misses 1891.";
-void trans_64x64_4x4_id(int M, int N, int A[N][M], int B[M][N]) {
+char trans_6464_id_desc[] = "6464. Inline diag. Misses 1891.";
+void trans_6464_id(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
@@ -109,8 +110,8 @@ void trans_64x64_4x4_id(int M, int N, int A[N][M], int B[M][N]) {
         for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + tileLength; i++) {
-                for(j = jj; j < jj + tileLength; j++){
+            for(i = ii; i < min(N, ii + tileLength); i++) {
+                for(j = jj; j < min(M, jj + tileLength); j++){
                     B[j][i] = A[i][j];
                 }
            }
@@ -118,8 +119,8 @@ void trans_64x64_4x4_id(int M, int N, int A[N][M], int B[M][N]) {
         }
     }
 }
-char trans_64x64_4x4_dd_desc[] = "64x64. 4x4. Delay diag. Misses 1797.";
-void trans_64x64_4x4_dd(int M, int N, int A[N][M], int B[M][N]) {
+char trans_6464_dd_desc[] = "6464. Delay diag. Misses 1797.";
+void trans_6464_dd(int M, int N, int A[N][M], int B[M][N]) {
     
     int ii, jj, i, j;
 
@@ -130,8 +131,8 @@ void trans_64x64_4x4_dd(int M, int N, int A[N][M], int B[M][N]) {
         for(jj = 0; jj < M; jj += tileLength){
             
             // For i != j, transfer all Aij to Bji.
-            for(i = ii; i < ii + tileLength; i++) {
-                for(j = jj; j < jj + tileLength; j++){
+            for(i = ii; i < min(N, ii + tileLength); i++) {
+                for(j = jj; j < min(M, jj + tileLength); j++){
                     if (i == j) {
                         diag[i%tileLength] = A[i][i];
                     }
@@ -149,7 +150,6 @@ void trans_64x64_4x4_dd(int M, int N, int A[N][M], int B[M][N]) {
     }
 }
 
-int min(int n1, int n2){return (n1 > n2) ? n2 : n1;}
 
 char trans_6167_id_desc[] = "6167. Inline diag. 1950 misses with tilelength 17.";
 void trans_6167_id(int M, int N, int A[N][M], int B[M][N]) {
@@ -205,10 +205,10 @@ void registerFunctions()
     /* Register any additional transpose functions */
     
     //registerTransFunction(trans_00, trans_00_desc);
-    registerTransFunction(trans_3232_id, trans_3232_id_desc);
-    registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
-    //registerTransFunction(trans_64x64_4x4_id, trans_64x64_4x4_id_desc);
-    //registerTransFunction(trans_64x64_4x4_dd, trans_64x64_4x4_dd_desc);
+    //registerTransFunction(trans_3232_id, trans_3232_id_desc);
+    //registerTransFunction(trans_3232_dd, trans_3232_dd_desc);
+    registerTransFunction(trans_6464_id, trans_6464_id_desc);
+    registerTransFunction(trans_6464_dd, trans_6464_dd_desc);
     //registerTransFunction(trans_6167_id, trans_6167_id_desc);
     
 }
